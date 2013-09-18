@@ -1,10 +1,30 @@
-function MapController(mapId, containerId, config) {
-    rootX = 0, rootY = 0;
-    map = new Map(config);
+function MapController(mapArgs) {
+    var rootX = 0, rootY = 0;
+    var map = new Map(mapArgs["config"]);
+
+    this.save = function() {
+        jsonStr = map.toJSON();
+        console.log(jsonStr);
+    }
+
+    this.load = function () {
+        map.load();
+    }
+
+    this.add = function() {
+        map.append("owner");
+    }
+
+    this.delete = function() {
+        map.remove("owner");
+    }
+
+    this.editMode = function() {
+    }
 
     this.FreeMindmapLoad = function (event) {
-        var canvas = document.getElementById(mapId),
-        container = document.getElementById(containerId),
+        var canvas = document.getElementById(mapArgs.mapId),
+        container = document.getElementById(mapArgs.containerId),
         ctx = canvas.getContext('2d');
         // resize the canvas to fill browser window dynamically
         window.addEventListener('resize', resizeCanvas, false);
@@ -19,7 +39,7 @@ function MapController(mapId, containerId, config) {
 
         function drawStuff() {
             // draw background
-            ctx.fillStyle = config.get('backgroundColor');
+            ctx.fillStyle = mapArgs.config.get('backgroundColor');
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // draw text
@@ -30,11 +50,17 @@ function MapController(mapId, containerId, config) {
     }
 }
 
-config = new MapConfig();
-mapController = new MapController("freemindmap", "mapContainer", config);
+mm = new MapController({
+    config : CreateMapConfig(),
+    mapId : "freemindmap",
+    containerId : "mapContainer"});
+mm.add();
+mm.add();
+mm.delete();
+mm.save();
 
 if (window.addEventListener) { // Mozilla, Netscape, Firefox
-    window.addEventListener('load', mapController.FreeMindmapLoad, false);
+    window.addEventListener('load', mm.FreeMindmapLoad, false);
 } else if (window.attachEvent) { // IE
-    window.attachEvent('onload', mapController.FreeMindmapLoad);
+    window.attachEvent('onload', mm.FreeMindmapLoad);
 }
