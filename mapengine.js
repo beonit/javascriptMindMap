@@ -62,27 +62,29 @@ function Map(config) {
         users = new Users(nid);
     })();
 
-    _draw = function(ctx, x, y) {
-        ctx.fillStyle = config.get('fontColor');
-        ctx.font = config.get('fontSize') + " " + config.get('fontFace');
+    _draw = function(arg) {
+        arg["ctx"].fillStyle = config.get('fontColor');
+        arg["ctx"].font = config.get('fontSize') + " " + config.get('fontFace');
     };
-    _append = function(uname) {
-        currentNodeId = users.get(uname);
+    _append = function(arg) {
+        currentNodeId = users.get(arg["uname"]);
         currentNode = db.get(currentNodeId);
         newNodeId = db.create(currentNodeId);
         currentNode.childs.push(newNodeId);
-        users.update(uname, newNodeId);
+        users.update(arg["uname"], newNodeId);
     };
-    _get = function(uname) { return db.get(users.get(uname)); };
-    _remove = function(uname) {
-        currentNodeId = users.get(uname);
+    _get = function(arg) { return db.get(users.get(arg["uname"])); };
+    _remove = function(arg) {
+        currentNodeId = users.get(arg["uname"]);
         currentNode = db.get(currentNodeId);
         parentsNodeId = currentNode.parents;
         parentsNode = db.get(parentsNodeId);
         from = parentsNode.childs.indexOf(currentNodeId);
         ArrayRemoveElement(parentsNode.childs, from, from);
-        users.update(uname, parentsNodeId);
+        users.update(arg["uname"], parentsNodeId);
     };
+    _undo = function() {};
+    _redo = function() {};
     _clone = function() {};
     _toJSON = function() { return JSON.stringify(db); };
 
@@ -92,6 +94,8 @@ function Map(config) {
         get : _get,
         remove : _remove,
         clone : _clone,
+        undo : _undo,
+        redo : _redo,
         toJSON : _toJSON,
     };
 }

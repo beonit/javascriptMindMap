@@ -8,15 +8,14 @@ function MapController(mapArgs) {
     }
 
     this.load = function () {
-        map.load();
     }
 
     this.add = function() {
-        map.append("owner");
+        map.append({"uname":"owner"});
     }
 
     this.delete = function() {
-        map.remove("owner");
+        map.remove({"uname":"owner"});
     }
 
     this.editMode = function() {
@@ -45,7 +44,7 @@ function MapController(mapArgs) {
             // draw text
             rootX = canvas.width / 2;
             rootY = canvas.height / 2;
-            map.draw(ctx, rootX, rootY);
+            map.draw({"ctx":ctx, "x":rootX, "y":rootY});
         }
     }
 }
