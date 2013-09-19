@@ -7,6 +7,8 @@ function ArrayRemoveElement(a, from, to) {
 function CreateMapConfig() {
     var private = {
         'backgroundColor':"#FFFFFF",
+        'marginNodeTop':5,
+        'marginNodeLeft':10,
     };
 
     return {
@@ -19,9 +21,18 @@ function CreateMapConfig() {
 function Node(parentsId) {
     this.mimetype = "plain/text";
     this.data = "default";
+    this.fontFace = "Arial";
+    this.fontSize = "15px";
+    this.fontColor = "#000000";
     this.childs = [];
     this.parents = parentsId;
     this.rechable = true;
+    this.display = true;
+    this.fold = false;
+    this.width = 0;
+    this.height = 0;
+    this.offsetX = 0;
+    this.offsetY = 0;
 }
 
 function Users(rootid) {
@@ -37,25 +48,49 @@ function Users(rootid) {
 
 function NodeDB() {
     var nodeDB = [];
-    var utils = {
-        clone : function(indexes) { return 0; },
-    }
-
     return {
         create : function(parentsId) {
             nodeDB.push(new Node(parentsId));
             return nodeDB.length - 1;
         },
-        get : function(nid) { return nodeDB[nid]; },
+        get : function(nid) {
+            return nodeDB[nid];
+        },
+        appendChild : function(parentsId) {
+            nodeDB.push(new Node(parentsId));
+            nodeDB[parentsId].childs.push(nodeDB.length - 1);
+            return nodeDB.length - 1;
+        },
+        clone : function(nid) {
+            nodeDB.push(JSON.parse(JSON.stringify(nodeDB[nid])));
+            return nodeDB.length - 1;
+        },
+        deepClone : function(nid) {
+            oldChilds = nodeDB[nid].childs;
+            nodeDB.push(JSON.parse(JSON.stringify(nodeDB[nid])));
+            clondNodeId = nodeDB.length - 1;
+            nodeDB[clondNodeId].childs = [];
+            for(var child in oldchilds) {
+                nodeDB[cloneNodeId].childs.push(_deepClone(oldchilds[child]));
+            }
+            return cloneNodeId;
+        },
+        getParentsId : function(nid) { return nodeDB[nid].parentsNodeId },
         replace : function(nid, node) { nodeDB[nid] = node; },
-        remove : function(nid) { nodeDB[nid] = null; },
-        gc: function(nid) { /* TODO : find nodes that unreachable from nid */ },
+        hide : function(nid) { nodeDB[nid].display = false; },
+        show : function(nid) { nodeDB[nid].display = true; },
+        gc: function(nid) {
+            /*
+            TODO : find nodes that unreachable from nid and
+            display false
+             */
+         },
         toJSON : function() { return JSON.stringify(nodeDB); }
     }
 }
 
 function Map(config) {
-    var users, db;
+    var users, db, undoList = [], currentUndoIndex = 0;
     (function init() {
         db = new NodeDB();
         nid = db.create(0);
@@ -63,36 +98,81 @@ function Map(config) {
     })();
 
     _draw = function(arg) {
-        arg["ctx"].fillStyle = config.get('fontColor');
-        arg["ctx"].font = config.get('fontSize') + " " + config.get('fontFace');
+        ctx = arg["ctx"];
+        measure(ctx, 0);
+        ctx.fillStyle = node.fontColor;
+        ctx.font = node.fontSize + " " + node.fontFace;
+        ctx.fillText(db.get(0).data,
+            arg["x"] - ctx.measureText(db.get(0).data).width / 2, arg["y"]);
     };
+
+    measure = function(ctx, nid) {
+        node = db.get(nid);
+        if(!node.display) {
+            return 0;
+        }
+        marginNodeTop = config.get("marginNodeTop");
+        marginNodeLeft = config.get("marginNodeLeft");
+        ctx.font = node.fontFace + node.fontSize;
+        node.width = ctx.measureText(node.data) + marginNodeLeft;
+        node.height = 0;
+        childWidthMax = 0;
+        for(var child in node.childs) {
+            rst = measure(ctx, node.childs[child]) + marginNodeTop;
+            node.height += rst.height;
+            childWidthMax = childWidthMax > rst.width
+                                ? childWidthMax : rst.width;
+        }
+        node.height = node.height < node.fontSize
+                        ? node.fontSize + marginNodeTop
+                        : node.height;
+        node.width += childWidthMax;
+        return {height:node.height, width:node.width};
+    }
+
     _append = function(arg) {
-        currentNodeId = users.get(arg["uname"]);
-        currentNode = db.get(currentNodeId);
-        newNodeId = db.create(currentNodeId);
-        currentNode.childs.push(newNodeId);
+        var currentNodeId = users.get(arg["uname"]);
+        var newNodeId = db.appendChild(currentNodeId);
         users.update(arg["uname"], newNodeId);
+        appendUndo(function() {
+                db.hide(newNodeId);
+                users.update(arg["uname"], currentNodeId);
+            } , function() {
+                db.show(newNodeId);
+                users.update(arg["uname"], newNodeId);
+            });
     };
-    _get = function(arg) { return db.get(users.get(arg["uname"])); };
-    _remove = function(arg) {
-        currentNodeId = users.get(arg["uname"]);
-        currentNode = db.get(currentNodeId);
-        parentsNodeId = currentNode.parents;
-        parentsNode = db.get(parentsNodeId);
-        from = parentsNode.childs.indexOf(currentNodeId);
-        ArrayRemoveElement(parentsNode.childs, from, from);
+    _hide = function(arg) {
+        var currentNodeId = users.get(arg["uname"]);
+        var parentsNodeId = db.getParentsId(currentNodeId);
+        db.hide(currentNodeId);
         users.update(arg["uname"], parentsNodeId);
+        appendUndo(function() {
+                db.show(currentNodeId);
+                users.update(arg["uname"], currentNodeId);
+            }, function() {
+                db.hide(currentNodeId);
+                users.update(arg["uname"], parentsNodeId);
+            });
     };
-    _undo = function() {};
-    _redo = function() {};
+    _undo = function() { undoList[--currentUndoIndex].undo(); };
+    _redo = function() { undoList[currentUndoIndex++].redo(); };
+    appendUndo = function(undoFunc, redoFunc) {
+        ArrayRemoveElement(undoList, currentUndoIndex, undoList.length - 1);
+        undoList.push({undo : undoFunc, redo : redoFunc});
+        currentUndoIndex++;
+    };
     _clone = function() {};
+    _edit = function() {
+
+    };
     _toJSON = function() { return JSON.stringify(db); };
 
     return {
         draw : _draw,
+        edit : _edit,
         append : _append,
-        get : _get,
-        remove : _remove,
+        remove : _hide,
         clone : _clone,
         undo : _undo,
         redo : _redo,

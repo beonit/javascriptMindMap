@@ -31,16 +31,16 @@ function MapController(mapArgs) {
         function resizeCanvas() {
             canvas.width = container.offsetWidth;
             canvas.height = container.offsetHeight;
+
+            // draw background
+            ctx.fillStyle = mapArgs.config.get('backgroundColor');
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             drawStuff();
         }
 
         resizeCanvas();
 
         function drawStuff() {
-            // draw background
-            ctx.fillStyle = mapArgs.config.get('backgroundColor');
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
             // draw text
             rootX = canvas.width / 2;
             rootY = canvas.height / 2;
