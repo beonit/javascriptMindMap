@@ -9,6 +9,8 @@ function CreateMapConfig() {
         'backgroundColor' : "#FFFFFF",
         'marginNodeTop' : 5,
         'marginNodeLeft' : 30,
+        'cursorColor' : "#CCCCCC",
+        'cursorMargin' : 2,
     };
 
     return {
@@ -43,6 +45,12 @@ function Users(rootid) {
     var select = { "owner" : [], }
     return {
         get : function(uname) { return users[uname]; },
+        getNameById : function(nid) {
+            for(u in users) {
+                if(users[u] == nid) return u;
+            }
+            return null;
+        },
         update : function(uname, nid) { users[uname] = nid; },
         remove : function(uname) { users.pop(uname); },
         toJSON : function() { return JSON.stringify(users); }
@@ -113,11 +121,23 @@ function Map(config) {
         ctx.font = node.font.size + "px " + node.font.face;
     }
 
-    draw = function(ctx, node, posX, posY) {
+    draw = function(ctx, node, nid, posX, posY) {
         // draw node
         if(!node.display) {
             return 0;
         }
+
+        // draw uer cursor
+        uname = users.getNameById(nid);
+        if(uname != null) {
+            ctx.fillStyle = config.get("cursorColor");
+            margin = config.get("cursorMargin");
+            ctx.fillRect(posX, posY - node.measure.height
+                            , node.measure.width + margin
+                            , node.measure.height + margin);
+        }
+
+        // draw node
         drawSetup(ctx, node);
         ctx.fillText(node.data, posX, posY);
 
@@ -133,7 +153,8 @@ function Map(config) {
         for(var i in node.link.right) {
             child = db.get(node.link.right[i]);
             if(child.display) {
-                posY += draw(ctx, child, posX, posY);
+                posY += draw(ctx, child, node.link.right[i]
+                    , posX + marginNodeLeft, posY) + config.get("marginNodeTop");
             }
         }
 
@@ -144,7 +165,8 @@ function Map(config) {
         for(var i in node.link.left) {
             child = db.get(node.link.left[i]);
             if(child.display) {
-                posY += draw(ctx, child, posX, posY) + config.get("marginNodeTop");
+                posY += draw(ctx, child, node.link.left[i]
+                    , posX - marginNodeLeft, posY) + config.get("marginNodeTop");
             }
         }
 
@@ -162,7 +184,7 @@ function Map(config) {
         marginNodeLeft = config.get("marginNodeLeft");
 
         // measure setup
-        node.measure.width = ctx.measureText(node.data).width + marginNodeLeft;
+        node.measure.width = ctx.measureText(node.data).width;
         node.measure.height = node.font.size;
 
         // mesure right child size
@@ -183,7 +205,7 @@ function Map(config) {
         node = db.get(0);
         posX = arg["x"] - ctx.measureText(node.data).width / 2;
         posY = arg["y"];
-        draw(ctx, node, posX, posY);
+        draw(ctx, node, 0, posX, posY);
     };
 
     _append = function(arg) {
