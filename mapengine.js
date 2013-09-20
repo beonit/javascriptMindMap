@@ -6,9 +6,9 @@ function ArrayRemoveElement(a, from, to) {
 
 function CreateMapConfig() {
     var private = {
-        'backgroundColor':"#FFFFFF",
-        'marginNodeTop':5,
-        'marginNodeLeft':10,
+        'backgroundColor' : "#FFFFFF",
+        'marginNodeTop' : 5,
+        'marginNodeLeft' : 30,
     };
 
     return {
@@ -33,6 +33,8 @@ function Node(parentsId) {
     this.height = 0;
     this.offsetX = 0;
     this.offsetY = 0;
+    this.drawPosStart = {x:0, y:0};
+    this.drawPosEnd = {x:0, y:0};
 }
 
 function Users(rootid) {
@@ -97,13 +99,44 @@ function Map(config) {
         users = new Users(nid);
     })();
 
+    drawSetup = function(ctx, node) {
+        ctx.fillStyle = node.fontColor;
+        ctx.font = node.fontSize + " " + node.fontFace;
+    }
+
+    drawRight = function(ctx, node, posX, posY) {
+        // draw node
+        if(!node.display) {
+            return 0;
+        }
+        drawSetup(ctx, node);
+        measureWidth = ctx.measureText(node.data).width;
+        ctx.fillText(node.data, posX, posY);
+
+        // update draw pos
+        node.drawPosStart = {x:posX, y:posY};
+        node.drawPosEnd = {x:posX + measureWidth, y:posY + node.fontSize};
+
+        // update point for draw right child
+        posX = posX + measureWidth + config.get("marginNodeLeft");
+        posY = posY - node.height / 2;
+        // draw child
+        for(var i in node.childs) {
+            child = db.get(node.childs[i]);
+            if(child.display) {
+                posY += drawRight(ctx, child, posX, posY);
+            }
+        }
+        return node.height;
+    }
+
     _draw = function(arg) {
         ctx = arg["ctx"];
         measure(ctx, 0);
-        ctx.fillStyle = node.fontColor;
-        ctx.font = node.fontSize + " " + node.fontFace;
-        ctx.fillText(db.get(0).data,
-            arg["x"] - ctx.measureText(db.get(0).data).width / 2, arg["y"]);
+        node = db.get(0);
+        posX = arg["x"] - ctx.measureText(node.data).width / 2;
+        posY = arg["y"];
+        drawRight(ctx, node, posX, posY);
     };
 
     measure = function(ctx, nid) {
