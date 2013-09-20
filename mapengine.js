@@ -19,23 +19,24 @@ function CreateMapConfig() {
 };
 
 function Node(parentsId) {
+    // data
     this.mimetype = "plain/text";
     this.data = "default";
-    this.fontFace = "Arial";
-    this.fontSize = "15px";
-    this.fontColor = "#000000";
-    this.childs = [];
-    this.parents = parentsId;
-    this.rechable = true;
+    this.font = {face : "Arial", size : 15, color : "#000000"};
+    // link
+    this.link = {left : [], right : [], parents : parentsId};
+    // draw
     this.display = true;
+    this.drawPos = {start:{x:0, y:0}, end:{x:0, y:0}};
+    this.measure = {width:0, height:0};
+    this.lHeight = 0;
+    this.rHeight = 0;
+    // not implement
+    this.rechable = true;
     this.fold = false;
-    this.width = 0;
-    this.height = 0;
     this.offsetX = 0;
     this.offsetY = 0;
-    this.drawPosStart = {x:0, y:0};
-    this.drawPosEnd = {x:0, y:0};
-}
+};
 
 function Users(rootid) {
     var users = { "owner" : rootid, };
@@ -60,7 +61,7 @@ function NodeDB() {
         },
         appendChild : function(parentsId) {
             nodeDB.push(new Node(parentsId));
-            nodeDB[parentsId].childs.push(nodeDB.length - 1);
+            nodeDB[parentsId].link.right.push(nodeDB.length - 1);
             return nodeDB.length - 1;
         },
         clone : function(nid) {
@@ -68,16 +69,24 @@ function NodeDB() {
             return nodeDB.length - 1;
         },
         deepClone : function(nid) {
-            oldChilds = nodeDB[nid].childs;
             nodeDB.push(JSON.parse(JSON.stringify(nodeDB[nid])));
             clondNodeId = nodeDB.length - 1;
-            nodeDB[clondNodeId].childs = [];
-            for(var child in oldchilds) {
-                nodeDB[cloneNodeId].childs.push(_deepClone(oldchilds[child]));
+
+            // right
+            oldChilds = nodeDB[nid].link.right;
+            nodeDB[clondNodeId].link.right = [];
+            for(var child in oldChilds) {
+                nodeDB[cloneNodeId].link.right.push(_deepClone(oldChilds[child]));
+            }
+            // left
+            oldChilds = nodeDB[nid].link.left;
+            nodeDB[clondNodeId].link.left = [];
+            for(var child in oldChilds) {
+                nodeDB[cloneNodeId].link.left.push(_deepClone(oldChilds[child]));
             }
             return cloneNodeId;
         },
-        getParentsId : function(nid) { return nodeDB[nid].parentsNodeId },
+        getParentsId : function(nid) { return nodeDB[nid].link.parents },
         replace : function(nid, node) { nodeDB[nid] = node; },
         hide : function(nid) { nodeDB[nid].display = false; },
         show : function(nid) { nodeDB[nid].display = true; },
@@ -100,35 +109,73 @@ function Map(config) {
     })();
 
     drawSetup = function(ctx, node) {
-        ctx.fillStyle = node.fontColor;
-        ctx.font = node.fontSize + " " + node.fontFace;
+        ctx.fillStyle = node.font.color;
+        ctx.font = node.font.size + "px " + node.font.face;
     }
 
-    drawRight = function(ctx, node, posX, posY) {
+    draw = function(ctx, node, posX, posY) {
         // draw node
         if(!node.display) {
             return 0;
         }
         drawSetup(ctx, node);
-        measureWidth = ctx.measureText(node.data).width;
         ctx.fillText(node.data, posX, posY);
 
-        // update draw pos
-        node.drawPosStart = {x:posX, y:posY};
-        node.drawPosEnd = {x:posX + measureWidth, y:posY + node.fontSize};
+        // update node draw pos
+        node.drawPos.start = {x : posX, y : posY};
+        node.drawPos.end = {x : posX + node.measure.width
+                                , y : posY + node.measure.height};
 
         // update point for draw right child
-        posX = posX + measureWidth + config.get("marginNodeLeft");
-        posY = posY - node.height / 2;
-        // draw child
-        for(var i in node.childs) {
-            child = db.get(node.childs[i]);
+        posX = posX + node.measure.width;
+        posY = posY - node.rHeight / 2;
+        // draw
+        for(var i in node.link.right) {
+            child = db.get(node.link.right[i]);
             if(child.display) {
-                posY += drawRight(ctx, child, posX, posY);
+                posY += draw(ctx, child, posX, posY);
             }
         }
-        return node.height;
-    }
+
+        // update point for draw left child
+        posX = posX + node.measure.width;
+        posY = posY - node.lHeight / 2;
+        // draw
+        for(var i in node.link.left) {
+            child = db.get(node.link.left[i]);
+            if(child.display) {
+                posY += draw(ctx, child, posX, posY) + config.get("marginNodeTop");
+            }
+        }
+
+        return Math.max(node.measure.height, node.lHeight, node.rHeight);
+    };
+
+    measure = function(ctx, nid) {
+        // prepare
+        node = db.get(nid);
+        if(!node.display) {
+            return 0;
+        }
+        drawSetup(ctx, node);
+        marginNodeTop = config.get("marginNodeTop");
+        marginNodeLeft = config.get("marginNodeLeft");
+
+        // measure setup
+        node.measure.width = ctx.measureText(node.data).width + marginNodeLeft;
+        node.measure.height = node.font.size;
+
+        // mesure right child size
+        node.rHeight = 0;
+        for(var i in node.link.right) {
+            node.rHeight += measure(ctx, node.link.right[i]);
+        }
+        node.lHeight = 0;
+        for(var i in node.link.left) {
+            node.lHeight += measure(ctx, node.link.left[i]);
+        }
+        return Math.max(node.rHeight, node.lHeight, node.measure.height);
+    };
 
     _draw = function(arg) {
         ctx = arg["ctx"];
@@ -136,32 +183,8 @@ function Map(config) {
         node = db.get(0);
         posX = arg["x"] - ctx.measureText(node.data).width / 2;
         posY = arg["y"];
-        drawRight(ctx, node, posX, posY);
+        draw(ctx, node, posX, posY);
     };
-
-    measure = function(ctx, nid) {
-        node = db.get(nid);
-        if(!node.display) {
-            return 0;
-        }
-        marginNodeTop = config.get("marginNodeTop");
-        marginNodeLeft = config.get("marginNodeLeft");
-        ctx.font = node.fontFace + node.fontSize;
-        node.width = ctx.measureText(node.data) + marginNodeLeft;
-        node.height = 0;
-        childWidthMax = 0;
-        for(var child in node.childs) {
-            rst = measure(ctx, node.childs[child]) + marginNodeTop;
-            node.height += rst.height;
-            childWidthMax = childWidthMax > rst.width
-                                ? childWidthMax : rst.width;
-        }
-        node.height = node.height < node.fontSize
-                        ? node.fontSize + marginNodeTop
-                        : node.height;
-        node.width += childWidthMax;
-        return {height:node.height, width:node.width};
-    }
 
     _append = function(arg) {
         var currentNodeId = users.get(arg["uname"]);
