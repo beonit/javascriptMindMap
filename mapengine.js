@@ -121,6 +121,7 @@ function NodeDB() {
 
 function Map(config) {
     var users, db, undoList = [], currentUndoIndex = 0;
+    var rootX = 0, rootY = 0;
     (function init() {
         db = new NodeDB();
         nid = db.create(0);
@@ -256,10 +257,15 @@ function Map(config) {
         ctx = arg["ctx"];
         measure(ctx, 0);
         var node = db.get(0);
-        var posX = arg["x"] - ctx.measureText(node.data).width / 2;
-        var posY = arg["y"];
+        var posX = arg["width"] / 2 - rootX - ctx.measureText(node.data).width / 2;
+        var posY = arg["height"] / 2 - rootY;
         draw(ctx, node, 0, posX, posY);
     };
+
+    _moveRoot = function(arg) {
+        rootX += arg["x"];
+        rootY += arg["y"];
+    }
 
     _append = function(arg) {
         var currentNodeId = users.get(arg["uname"]);
@@ -325,6 +331,7 @@ function Map(config) {
 
     return {
         draw : _draw,
+        moveRoot : _moveRoot,
         edit : _edit,
         append : _append,
         remove : _hide,

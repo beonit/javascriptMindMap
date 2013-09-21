@@ -1,7 +1,6 @@
 function MapController(mapArgs) {
-    var rootX = 0, rootY = 0;
     var map = new Map(mapArgs["config"]);
-    var editMode = false, redrawMode = false;
+    var editMode = false;
 
     this.enter = function() { return true; };
     this.save = function() { return false; };
@@ -88,11 +87,8 @@ function MapController(mapArgs) {
             // drawBackround
             ctx.fillStyle = mapArgs.config.get('backgroundColor');
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
             // draw text
-            rootX = canvas.width / 2;
-            rootY = canvas.height / 2;
-            map.draw({"ctx":ctx, "x":rootX, "y":rootY});
+            map.draw({"ctx":ctx, "width":canvas.width, "height":canvas.height});
         }
 
         // keyevent handler
@@ -121,6 +117,60 @@ function MapController(mapArgs) {
             // console.log(e.keyCode);
             drawAll();
             return;
+        }
+
+        // mouse event handle
+        window.addEventListener("mousedown", mousedownHandler, false);
+        window.addEventListener("mouseup", mouseupHandler, false);
+        window.addEventListener("mousemove", mousemoveHandler, false);
+        window.addEventListener("click", mouseClickHandler, false);
+        var posDownX, posDownY;
+        var downTime, upTime;
+        var leftDown = false;
+        var lastDrawTime = 0;
+        function mousedownHandler(e) {
+            if(e.button == 0) {
+                posDownX = e.x;
+                posDownY = e.y;
+                downTime = Date.now();
+                leftDown = true;
+            }
+        }
+
+        function mouseupHandler(e) {
+            if(e.button == 0) {
+                leftDown = false;
+            }
+        }
+
+        function mousemoveHandler(e) {
+            if(e.button == 0 && leftDown) {
+                var currentTime = Date.now();
+                if(currentTime - lastDrawTime < 33) {
+                    // To prevent frequent draw
+                    return
+                }
+                // do drag
+                map.moveRoot({"x":posDownX - e.x, "y":posDownY - e.y});
+                posDownX = e.x;
+                posDownY = e.y;
+                drawAll();
+                lastDrawTime = currentTime;
+            }
+            return;
+        }
+
+        function mouseClickHandler(e) {
+            if(e.button == 0 && upTime - downTime < 100) {
+                // click
+                var w = (posDownX - posUpX) * (posDownX - posUpX);
+                var h = (posDownY - posUpY) * (posDownY - posUpY);
+                if(Math.sqrt(w + h) < 10) {
+
+                } else {
+
+                }
+            }
         }
     }
 }
