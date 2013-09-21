@@ -67,6 +67,17 @@ function NodeDB() {
         get : function(nid) {
             return nodeDB[nid];
         },
+        getRootId : function(nid) {
+            var node;
+            while(true) {
+                node = nodeDB[nid];
+                if(node.link.parents == nid) {
+                    return nid;
+                }
+                nid = node.link.parents;
+            };
+
+        },
         appendChild : function(parentsId) {
             nodeDB.push(new Node(parentsId));
             nodeDB[parentsId].link.right.push(nodeDB.length - 1);
@@ -116,9 +127,47 @@ function Map(config) {
         users = new Users(nid);
     })();
 
+    var DIRECT = {ROOT:0, LEFT:1, RIGHT:2};
+
     drawSetup = function(ctx, node) {
         ctx.fillStyle = node.font.color;
         ctx.font = node.font.size + "px " + node.font.face;
+    }
+
+    getLeftChild = function(nid) {
+        var child, node = db.get(nid);
+        for(var i in node.link.left) {
+            child = db.get(node.link.left[i]);
+            if(child.display) {
+                return node.link.left[i];
+            }
+        }
+        return nid;
+    }
+
+    getRightChild = function(nid) {
+        var child, node = db.get(nid);
+        for(var i in node.link.right) {
+            child = db.get(node.link.right[i]);
+            if(child.display) {
+                return node.link.right[i];
+            }
+        }
+        return nid;
+    }
+
+    checkDirection = function(nodeid) {
+        var rootid = db.getRootId(nodeid);
+        var root = db.get(rootid);
+        var node = db.get(nodeid);
+        if(rootid == nodeid) {
+            return DIRECT.ROOT;
+        }
+        if(root.drawPos.start.x > node.drawPos.start.x) {
+            return DIRECT.LEFT;
+        } else {
+            return DIRECT.RIGHT;
+        }
     }
 
     draw = function(ctx, node, nid, posX, posY) {
@@ -250,6 +299,28 @@ function Map(config) {
     _edit = function() {
 
     };
+    _keyLeft = function() {
+        var nid = users.get("owner");
+        var direct = checkDirection(nid);
+        if(direct == DIRECT.ROOT || direct == DIRECT.LEFT) {
+            users.update("owner", getLeftChild(nid));
+        } else if(direct == DIRECT.RIGHT) {
+            users.update("owner", db.getParentsId(nid));
+        }
+    };
+    _keyRight = function() {
+        var nid = users.get("owner");
+        var direct = checkDirection(nid);
+        if(direct == DIRECT.ROOT || direct == DIRECT.RIGHT) {
+            users.update("owner", getRightChild(nid));
+        } else if(direct == DIRECT.LEFT) {
+            users.update("owner", db.getParentsId(nid));
+        }
+    };
+    _keyUp = function() {
+    };
+    _keyDown = function() {
+    };
     _toJSON = function() { return JSON.stringify(db); };
 
     return {
@@ -261,6 +332,9 @@ function Map(config) {
         undo : _undo,
         redo : _redo,
         toJSON : _toJSON,
-        REDRAW : {NONE : 0, ALL: 1, NODE_ONLY : 2, RIGHT_ONLY : 4, LEFT_ONLY : 8},
+        keyLeft : _keyLeft,
+        keyRight : _keyRight,
+        keyUp : _keyUp,
+        keyDown : _keyDown,
     };
 }

@@ -1,6 +1,6 @@
 function MapController(mapArgs) {
     var rootX = 0, rootY = 0;
-    var map = new Map(mapArgs["config"]), invalidate = map.REDRAW.NONE;
+    var map = new Map(mapArgs["config"]);
     var editMode = false, redrawMode = false;
 
     this.enter = function() { return true; };
@@ -13,11 +13,10 @@ function MapController(mapArgs) {
     this.paste = function() { return true; };
     this.undo = function() { return true; };
     this.redo = function() { return true; };
-    this.directRight = function() { return true; };
-    this.directUp = function() { return true; };
-    this.directLeft = function() { return true; };
-    this.directDown = function() { return true; };
-    this.directRight = function() { return true; };
+    this.directRight = function() { map.keyRight(); return true; };
+    this.directUp = function() { map.keyUp(); return true; };
+    this.directLeft = function() { map.keyLeft(); return true; };
+    this.directDown = function() { map.keyDown(); return true; };
     this.altLeft = function() { return true; };
     this.altUp = function() { return true; };
     this.altRight = function() { return true; };
@@ -81,11 +80,11 @@ function MapController(mapArgs) {
             canvas.height = container.offsetHeight;
 
             // draw background
-            drawAll(map.REDRAW.ALL);
+            drawAll();
         }
         resizeCanvas();
 
-        function drawAll(mode) {
+        function drawAll() {
             // drawBackround
             ctx.fillStyle = mapArgs.config.get('backgroundColor');
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -93,7 +92,7 @@ function MapController(mapArgs) {
             // draw text
             rootX = canvas.width / 2;
             rootY = canvas.height / 2;
-            map.draw({"ctx":ctx, "x":rootX, "y":rootY, "mode":mode});
+            map.draw({"ctx":ctx, "x":rootX, "y":rootY});
         }
 
         // keyevent handler
@@ -120,7 +119,7 @@ function MapController(mapArgs) {
                 e.stopPropagation();
             }
             // console.log(e.keyCode);
-            drawAll(map.REDRAW.NODE_ONLY);
+            drawAll();
             return;
         }
     }
