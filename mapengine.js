@@ -78,6 +78,18 @@ function NodeDB() {
             };
 
         },
+        getIdByPoint : function(x, y) {
+            var node;
+            for(var i in nodeDB) {
+                node = nodeDB[i];
+                if(node.display
+                    && node.drawPos.start.x <= x && x <= node.drawPos.end.x
+                    && node.drawPos.start.y <= y && y <= node.drawPos.end.y) {
+                    return Number(i);
+                }
+            }
+            return null;
+        },
         appendChild : function(parentsId) {
             nodeDB.push(new Node(parentsId));
             nodeDB[parentsId].link.right.push(nodeDB.length - 1);
@@ -124,7 +136,7 @@ function Map(config) {
     var rootX = 0, rootY = 0;
     (function init() {
         db = new NodeDB();
-        nid = db.create(0);
+        var nid = db.create(0);
         users = new Users(nid);
     })();
 
@@ -194,9 +206,9 @@ function Map(config) {
         ctx.fillText(node.data, posX, posY);
 
         // update node draw pos
-        node.drawPos.start = {x : posX, y : posY};
+        node.drawPos.start = {x : posX, y : posY - node.measure.height};
         node.drawPos.end = {x : posX + node.measure.width
-                                , y : posY + node.measure.height};
+                                , y : posY};
 
         // update point for draw right child
         posX = posX + node.measure.width;
@@ -267,6 +279,16 @@ function Map(config) {
         rootY += arg["y"];
     }
 
+    _moveCursor = function(arg) {
+        var nid = db.getIdByPoint(arg.x, arg.y);
+        var oldNid = users.get("owner");
+        if(nid != null && nid != oldNid) {
+            users.update("owner", nid);
+            return true;
+        }
+        return false;
+    }
+
     _append = function(arg) {
         var currentNodeId = users.get(arg["uname"]);
         var newNodeId = db.appendChild(currentNodeId);
@@ -332,6 +354,7 @@ function Map(config) {
     return {
         draw : _draw,
         moveRoot : _moveRoot,
+        moveCursor : _moveCursor,
         edit : _edit,
         append : _append,
         remove : _hide,

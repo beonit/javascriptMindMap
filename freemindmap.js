@@ -120,10 +120,10 @@ function MapController(mapArgs) {
         }
 
         // mouse event handle
-        window.addEventListener("mousedown", mousedownHandler, false);
-        window.addEventListener("mouseup", mouseupHandler, false);
-        window.addEventListener("mousemove", mousemoveHandler, false);
-        window.addEventListener("click", mouseClickHandler, false);
+        canvas.addEventListener("mousedown", mousedownHandler, false);
+        canvas.addEventListener("mouseup", mouseupHandler, false);
+        canvas.addEventListener("mousemove", mousemoveHandler, false);
+        canvas.addEventListener("click", mouseClickHandler, false);
         var posDownX, posDownY;
         var downTime, upTime;
         var leftDown = false;
@@ -144,18 +144,20 @@ function MapController(mapArgs) {
         }
 
         function mousemoveHandler(e) {
-            if(e.button == 0 && leftDown) {
-                var currentTime = Date.now();
-                if(currentTime - lastDrawTime < 33) {
-                    // To prevent frequent draw
-                    return
-                }
+            var currentTime = Date.now();
+            if(e.button == 0 && leftDown && currentTime - lastDrawTime > 33) {
                 // do drag
                 map.moveRoot({"x":posDownX - e.x, "y":posDownY - e.y});
                 posDownX = e.x;
                 posDownY = e.y;
                 drawAll();
                 lastDrawTime = currentTime;
+            } else if(!leftDown && currentTime - lastDrawTime > 33) {
+                if(map.moveCursor({"x":e.x - canvas.offsetLeft
+                    , "y":e.y - canvas.offsetTop})) {
+                    drawAll();
+                    lastDrawTime = currentTime;
+                }
             }
             return;
         }
