@@ -1,8 +1,7 @@
 function MapController(mapArgs) {
     var rootX = 0, rootY = 0;
-    var map = new Map(mapArgs["config"]);
-
-    var editMode = false;
+    var map = new Map(mapArgs["config"]), invalidate = map.REDRAW.NONE;
+    var editMode = false, redrawMode = false;
 
     this.enter = function() { return true; };
     this.save = function() { return false; };
@@ -77,8 +76,28 @@ function MapController(mapArgs) {
 
         // resize the canvas to fill browser window dynamically
         window.addEventListener('resize', resizeCanvas, false);
-        window.addEventListener("keydown", keydownHandler, false);
+        function resizeCanvas() {
+            canvas.width = container.offsetWidth;
+            canvas.height = container.offsetHeight;
 
+            // draw background
+            drawAll(map.REDRAW.ALL);
+        }
+        resizeCanvas();
+
+        function drawAll(mode) {
+            // drawBackround
+            ctx.fillStyle = mapArgs.config.get('backgroundColor');
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // draw text
+            rootX = canvas.width / 2;
+            rootY = canvas.height / 2;
+            map.draw({"ctx":ctx, "x":rootX, "y":rootY, "mode":mode});
+        }
+
+        // keyevent handler
+        window.addEventListener("keydown", keydownHandler, false);
         function keydownHandler(e) {
             keyPropagation = true;
             if(editMode) {
@@ -101,27 +120,8 @@ function MapController(mapArgs) {
                 e.stopPropagation();
             }
             // console.log(e.keyCode);
-
+            drawAll(map.REDRAW.NODE_ONLY);
             return;
-        }
-
-        function resizeCanvas() {
-            canvas.width = container.offsetWidth;
-            canvas.height = container.offsetHeight;
-
-            // draw background
-            ctx.fillStyle = mapArgs.config.get('backgroundColor');
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            drawStuff();
-        }
-
-        resizeCanvas();
-
-        function drawStuff() {
-            // draw text
-            rootX = canvas.width / 2;
-            rootY = canvas.height / 2;
-            map.draw({"ctx":ctx, "x":rootX, "y":rootY});
         }
     }
 }

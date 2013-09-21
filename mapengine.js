@@ -24,7 +24,7 @@ function Node(parentsId) {
     // data
     this.mimetype = "plain/text";
     this.data = "default";
-    this.font = {face : "Arial", size : 15, color : "#000000"};
+    this.font = {face : "Arial", size : 15, color : "#000000", bgColor : "#ffffff"};
     // link
     this.link = {left : [], right : [], parents : parentsId};
     // draw
@@ -128,14 +128,16 @@ function Map(config) {
         }
 
         // draw uer cursor
-        uname = users.getNameById(nid);
+        var uname = users.getNameById(nid);
         if(uname != null) {
             ctx.fillStyle = config.get("cursorColor");
-            margin = config.get("cursorMargin");
-            ctx.fillRect(posX, posY - node.measure.height
-                            , node.measure.width + margin
-                            , node.measure.height + margin);
+        } else {
+            ctx.fillStyle = node.font.bgColor;
         }
+        margin = config.get("cursorMargin");
+        ctx.fillRect(posX, posY - node.measure.height
+                        , node.measure.width + margin
+                        , node.measure.height + margin);
 
         // draw node
         drawSetup(ctx, node);
@@ -150,6 +152,7 @@ function Map(config) {
         posX = posX + node.measure.width;
         posY = posY - node.rHeight / 2;
         // draw
+        var child = null;
         for(var i in node.link.right) {
             child = db.get(node.link.right[i]);
             if(child.display) {
@@ -175,7 +178,7 @@ function Map(config) {
 
     measure = function(ctx, nid) {
         // prepare
-        node = db.get(nid);
+        var node = db.get(nid);
         if(!node.display) {
             return 0;
         }
@@ -189,6 +192,7 @@ function Map(config) {
 
         // mesure right child size
         node.rHeight = 0;
+
         for(var i in node.link.right) {
             node.rHeight += measure(ctx, node.link.right[i]);
         }
@@ -202,9 +206,9 @@ function Map(config) {
     _draw = function(arg) {
         ctx = arg["ctx"];
         measure(ctx, 0);
-        node = db.get(0);
-        posX = arg["x"] - ctx.measureText(node.data).width / 2;
-        posY = arg["y"];
+        var node = db.get(0);
+        var posX = arg["x"] - ctx.measureText(node.data).width / 2;
+        var posY = arg["y"];
         draw(ctx, node, 0, posX, posY);
     };
 
@@ -220,11 +224,12 @@ function Map(config) {
                 users.update(arg["uname"], newNodeId);
             });
     };
+
     _hide = function(arg) {
         var currentNodeId = users.get(arg["uname"]);
         var parentsNodeId = db.getParentsId(currentNodeId);
-        db.hide(currentNodeId);
         users.update(arg["uname"], parentsNodeId);
+        db.hide(currentNodeId);
         appendUndo(function() {
                 db.show(currentNodeId);
                 users.update(arg["uname"], currentNodeId);
@@ -233,6 +238,7 @@ function Map(config) {
                 users.update(arg["uname"], parentsNodeId);
             });
     };
+
     _undo = function() { undoList[--currentUndoIndex].undo(); };
     _redo = function() { undoList[currentUndoIndex++].redo(); };
     appendUndo = function(undoFunc, redoFunc) {
@@ -255,5 +261,6 @@ function Map(config) {
         undo : _undo,
         redo : _redo,
         toJSON : _toJSON,
+        REDRAW : {NONE : 0, ALL: 1, NODE_ONLY : 2, RIGHT_ONLY : 4, LEFT_ONLY : 8},
     };
 }
