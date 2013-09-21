@@ -1,4 +1,5 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta http-equiv="Content-type" content="text/html; charset=utf8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,17 +12,55 @@
 <script src="bootstrap/js/bootstrap.min.js"></script>
 </head>
 <body>
-<div class="navbar navbar-inverse navbar-fixed-top">
-  <div class="navbar-inner">
-    <a class="brand" href="#">FreeMind on Web!</a>
-    <ul class="nav">
-      <li class="active" onclick="mapController.save()"><a href="#">Save</a></li>
-      <li><a href="#" onclick="mapController.load()">Load</a></li>
-      <li><a href="#">Help</a></li>
-      <li><a href="#">Contact</a></li>
-    </ul>
+<nav class="navbar navbar-default" role="navigation">
+  <div class="navbar-header">
+    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+      <span class="sr-only">Toggle navigation</span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </button>
+    <a class="navbar-brand" href="#">FreeMind on Web!</a>
   </div>
-</div>
+
+  <!-- Collect the nav links, forms, and other content for toggling -->
+  <div class="collapse navbar-collapse navbar-ex1-collapse">
+    <ul class="nav navbar-nav">
+      <li class="dropdown">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Map <b class="caret"></b></a>
+        <ul class="dropdown-menu">
+          <li><a href="#">New</a></li>
+          <li><a href="#">Save</a></li>
+          <li><a href="#">Load</a></li>
+          <li><a href="#">Share</a></li>
+        </ul>
+      </li>
+      <li class="dropdown">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Node <b class="caret"></b></a>
+        <ul class="dropdown-menu">
+          <li><a href="#">Insert new node</a></li>
+          <li><a href="#">Copy node</a></li>
+          <li><a href="#">Cut node</a></li>
+          <li><a href="#">Paste node</a></li>
+          <li><a href="#">Undo action</a></li>
+          <li><a href="#">Redo action</a></li>
+        </ul>
+      </li>
+      <li><a href="#">Help</a></li>
+    </ul>
+    <ul class="nav navbar-nav navbar-right">
+      <li><a href="#">Contact us</a></li>
+      <li class="dropdown">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Account <b class="caret"></b></a>
+        <ul class="dropdown-menu">
+          <li><a href="#">Login</a></li>
+          <li><a href="#">Logout</a></li>
+          <li><a href="#">Create account</a></li>
+        </ul>
+      </li>
+    </ul>
+  </div><!-- /.navbar-collapse -->
+</nav>
 <div id="mapContainer">
 	<canvas id="freemindmap"></canvas>
 </div>
