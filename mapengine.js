@@ -7,10 +7,10 @@ function ArrayRemoveElement(a, from, to) {
 function CreateMapConfig() {
     var private = {
         'backgroundColor' : "#FFFFFF",
-        'marginNodeTop' : 5,
+        'marginNodeTop' : 10,
         'marginNodeLeft' : 30,
         'cursorColor' : "#CCCCCC",
-        'cursorMargin' : 2,
+        'cursorMargin' : 3,
     };
 
     return {
@@ -183,13 +183,7 @@ function Map(config) {
         }
     }
 
-    draw = function(ctx, node, nid, posX, posY) {
-        // draw node
-        if(!node.display) {
-            return 0;
-        }
-
-        // draw uer cursor
+    drawNode = function(ctx, node, nid, posX, posY) {
         var uname = users.getNameById(nid);
         if(uname != null) {
             ctx.fillStyle = config.get("cursorColor");
@@ -207,34 +201,42 @@ function Map(config) {
 
         // update node draw pos
         node.drawPos.start = {x : posX, y : posY - node.measure.height};
-        node.drawPos.end = {x : posX + node.measure.width
-                                , y : posY};
+        node.drawPos.end = {x : posX + node.measure.width, y : posY};
+    }
+
+    draw = function(ctx, node, nid, posX, posY) {
+        // draw node
+        if(!node.display) {
+            return 0;
+        }
+        var orgPosX = posX, orgPosY = posY;
+        var marginNodeTop = config.get("marginNodeTop");
+
+        // drawNode
+        drawNode(ctx, node, nid, orgPosX, orgPosY);
 
         // update point for draw right child
-        posX = posX + node.measure.width;
-        posY = posY - node.rHeight / 2;
-        // draw
-        var child = null;
+        posX = orgPosX + node.measure.width + config.get("marginNodeTop");
+        if(node.measure.height < node.rHeight) {
+            posY = orgPosY - node.rHeight / 2;
+        } else {
+            posY = orgPosY - node.rHeight;
+        }
+        var child = null, childId;
         for(var i in node.link.right) {
-            child = db.get(node.link.right[i]);
+            childId = node.link.right[i];
+            child = db.get(childId);
             if(child.display) {
-                posY += draw(ctx, child, node.link.right[i]
-                    , posX + marginNodeLeft, posY) + config.get("marginNodeTop");
+                if(node.measure.height < node.rHeight) {
+                    draw(ctx, child, childId, posX, posY + child.rHeight / 2);
+                } else {
+                    draw(ctx, child, childId, posX, posY + child.rHeight);
+                }
+                posY += child.rHeight + marginNodeTop;
             }
         }
 
         // update point for draw left child
-        posX = posX + node.measure.width;
-        posY = posY - node.lHeight / 2;
-        // draw
-        for(var i in node.link.left) {
-            child = db.get(node.link.left[i]);
-            if(child.display) {
-                posY += draw(ctx, child, node.link.left[i]
-                    , posX - marginNodeLeft, posY) + config.get("marginNodeTop");
-            }
-        }
-
         return Math.max(node.measure.height, node.lHeight, node.rHeight);
     };
 
@@ -254,15 +256,28 @@ function Map(config) {
 
         // mesure right child size
         node.rHeight = 0;
-
         for(var i in node.link.right) {
-            node.rHeight += measure(ctx, node.link.right[i]);
+            if(db.get(node.link.right[i]).display) {
+                if(node.rHeight != 0) {
+                    node.rHeight += marginNodeTop;
+                }
+                node.rHeight += measure(ctx, node.link.right[i]);
+            }
         }
+        node.rHeight = Math.max(node.rHeight, node.measure.height);
+
         node.lHeight = 0;
         for(var i in node.link.left) {
-            node.lHeight += measure(ctx, node.link.left[i]);
+            if(db.get(node.link.left[i]).display) {
+                if(node.lHeight != 0) {
+                    node.lHeight += marginNodeTop;
+                }
+                node.lHeight += measure(ctx, node.link.left[i]);
+            }
         }
-        return Math.max(node.rHeight, node.lHeight, node.measure.height);
+        node.lHeight = Math.max(node.lHeight, node.measure.height);
+
+        return Math.max(node.rHeight, node.lHeight);
     };
 
     _draw = function(arg) {
