@@ -59,6 +59,19 @@ function Users(rootid) {
 
 function NodeDB() {
     var nodeDB = [];
+
+    findUpperNidInList = function (nid, list) {
+        var i = list.indexOf(nid);
+        while(--i >= 0 && !nodeDB[list[i]].display);
+        return list[i];
+    };
+
+    findLowerNidInList = function(nid, list) {
+        var i = list.indexOf(nid);
+        while(i >= 0 && ++i < list.length && !nodeDB[list[i]].display);
+        return list[i];
+    };
+
     return {
         create : function(parentsId) {
             nodeDB.push(new Node(parentsId));
@@ -116,6 +129,16 @@ function NodeDB() {
                 nodeDB[cloneNodeId].link.left.push(_deepClone(oldChilds[child]));
             }
             return cloneNodeId;
+        },
+        findUpperSibling : function(nid) {
+            var parents = nodeDB[nodeDB[nid].link.parents];
+            var i = findUpperNidInList(nid, parents.link.left);
+            return i >= 0 ? i : findUpperNidInList(nid, parents.link.right);
+        },
+        findLowerSibling : function(nid) {
+            var parents = nodeDB[nodeDB[nid].link.parents];
+            var i = findLowerNidInList(nid, parents.link.left);
+            return i >= 0 ? i : findLowerNidInList(nid, parents.link.right);
         },
         getParentsId : function(nid) { return nodeDB[nid].link.parents },
         replace : function(nid, node) { nodeDB[nid] = node; },
@@ -244,9 +267,58 @@ function Map(config) {
             users.update("owner", db.getParentsId(nid));
         }
     };
-    _keyUp = function() {
+
+    _keyUp = function(canvasHeight) {
+        var nid = users.get("owner");
+        if(checkDirection(nid) == DIRECT.ROOT) {
+            return;
+        }
+        // find sibling
+        var sibling = db.findUpperSibling(nid);
+        if(sibling) {
+            users.update("owner", sibling);
+            return;
+        }
+        // find by point
+        var node = db.get(nid);
+        var posY, posX;
+        var marginNodeTop = config.get("marginNodeTop");
+        posX = node.drawPos.start.x;
+        posY = node.drawPos.start.y - marginNodeTop;
+        for(; posY > 0; posY -= marginNodeTop) {
+            nid = db.getIdByPoint(posX, posY);
+            if(nid != null) {
+                users.update("owner", nid);
+                break;
+            }
+        }
+        // no node...
     };
-    _keyDown = function() {
+    _keyDown = function(canvasHeight) {
+        var nid = users.get("owner");
+        if(checkDirection(nid) == DIRECT.ROOT) {
+            return;
+        }
+        // find sibling
+        var sibling = db.findLowerSibling(nid);
+        if(sibling) {
+            users.update("owner", sibling);
+            return;
+        }
+        // find by point
+        var node = db.get(nid);
+        var posY, posX;
+        var marginNodeTop = config.get("marginNodeTop");
+        posX = node.drawPos.start.x;
+        posY = node.drawPos.end.y + marginNodeTop;
+        for(; posY < canvasHeight; posY += marginNodeTop) {
+            nid = db.getIdByPoint(posX, posY);
+            if(nid != null) {
+                users.update("owner", nid);
+                break;
+            }
+        }
+        // no node...
     };
     _toJSON = function() { return JSON.stringify(db); };
 

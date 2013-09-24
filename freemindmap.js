@@ -1,6 +1,7 @@
 function MapController(mapArgs) {
     var map = new Map(mapArgs["config"]);
     var editMode = false;
+    var canvasWidth, canvasHeight;
 
     this.enter = function() { return true; };
     this.save = function() { return false; };
@@ -13,9 +14,9 @@ function MapController(mapArgs) {
     this.undo = function() { return true; };
     this.redo = function() { return true; };
     this.directRight = function() { map.keyRight(); return true; };
-    this.directUp = function() { map.keyUp(); return true; };
+    this.directUp = function() { map.keyUp(canvasHeight); return true; };
     this.directLeft = function() { map.keyLeft(); return true; };
-    this.directDown = function() { map.keyDown(); return true; };
+    this.directDown = function() { map.keyDown(canvasHeight); return true; };
     this.altLeft = function() { return true; };
     this.altUp = function() { return true; };
     this.altRight = function() { return true; };
@@ -75,9 +76,11 @@ function MapController(mapArgs) {
         // resize the canvas to fill browser window dynamically
         window.addEventListener('resize', resizeCanvas, false);
         function resizeCanvas() {
+            // update canvas size
+            canvasWidth = container.offsetWidth;
+            canvasHeight = container.offsetHeight;
             canvas.width = container.offsetWidth;
             canvas.height = container.offsetHeight;
-
             // draw background
             drawAll();
         }
