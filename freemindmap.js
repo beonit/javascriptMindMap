@@ -18,9 +18,9 @@ function MapController(mapArgs) {
     this.directLeft = function() { map.keyLeft(); return true; };
     this.directDown = function() { map.keyDown(canvasHeight); return true; };
     this.altLeft = function() { return true; };
-    this.altUp = function() { return true; };
+    this.altUp = function() { map.orderUp(); return true; };
     this.altRight = function() { return true; };
-    this.altDown = function() { return true; };
+    this.altDown = function() { map.orderDown(); return true; };
     this.insert = function() {
         map.append({"uname":"owner"});
         return true;

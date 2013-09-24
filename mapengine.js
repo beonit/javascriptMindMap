@@ -72,6 +72,15 @@ function NodeDB() {
         return list[i];
     };
 
+    _getChildListHasNid = function(nid) {
+        var parents = nodeDB[nodeDB[nid].link.parents];
+        if(parents.link.left.indexOf(nid) >= 0) {
+            return parents.link.left;
+        } else if(parents.link.right.indexOf(nid) >= 0) {
+            return parents.link.right;
+        }
+    };
+
     return {
         create : function(parentsId) {
             nodeDB.push(new Node(parentsId));
@@ -131,14 +140,18 @@ function NodeDB() {
             return cloneNodeId;
         },
         findUpperSibling : function(nid) {
-            var parents = nodeDB[nodeDB[nid].link.parents];
-            var i = findUpperNidInList(nid, parents.link.left);
-            return i >= 0 ? i : findUpperNidInList(nid, parents.link.right);
+            return findUpperNidInList(nid, _getChildListHasNid(nid));
         },
         findLowerSibling : function(nid) {
-            var parents = nodeDB[nodeDB[nid].link.parents];
-            var i = findLowerNidInList(nid, parents.link.left);
-            return i >= 0 ? i : findLowerNidInList(nid, parents.link.right);
+            return findLowerNidInList(nid, _getChildListHasNid(nid));
+        },
+        swapOrder : function(nid1, nid2) {
+            var list = _getChildListHasNid(nid1);
+            var i1 = list.indexOf(nid1);
+            var i2 = list.indexOf(nid2);
+            var temp = list[i1];
+            list[i1] = list[i2];
+            list[i2] = temp;
         },
         getParentsId : function(nid) { return nodeDB[nid].link.parents },
         replace : function(nid, node) { nodeDB[nid] = node; },
@@ -320,6 +333,32 @@ function Map(config) {
         }
         // no node...
     };
+    _orderUp = function() {
+        var nid = users.get("owner");
+        var siblingid = db.findUpperSibling(nid);
+        if(!siblingid) {
+            return;
+        }
+        db.swapOrder(nid, siblingid);
+        appendUndo(function() {
+                db.swapOrder(nid, siblingid);
+            }, function() {
+                db.swapOrder(nid, siblingid);
+            });
+    };
+    _orderDown = function() {
+        var nid = users.get("owner");
+        var siblingid = db.findLowerSibling(nid);
+        if(!siblingid) {
+            return;
+        }
+        db.swapOrder(nid, siblingid);
+        appendUndo(function() {
+                db.swapOrder(nid, siblingid);
+            }, function() {
+                db.swapOrder(nid, siblingid);
+            });
+    };
     _toJSON = function() { return JSON.stringify(db); };
 
     return {
@@ -337,6 +376,8 @@ function Map(config) {
         keyRight : _keyRight,
         keyUp : _keyUp,
         keyDown : _keyDown,
+        orderUp : _orderUp,
+        orderDown : _orderDown,
     };
 }
 
