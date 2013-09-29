@@ -506,25 +506,37 @@ function Painter(db, users, config) {
         // update node draw pos
         node.drawPos.start = {x : posX, y : posY - node.measure.height};
         node.drawPos.end = {x : posX + node.measure.width, y : posY};
-    }
+    };
 
-    drawNodeTree = function(ctx, node, nid, posX, posY) {
-        // draw node
-        if(!node.display) {
-            return 0;
-        }
-        var orgPosX = posX, orgPosY = posY;
+    drawLeftChilds = function(ctx, node, nid, posX, posY) {
         var marginNodeTop = config.get("marginNodeTop");
-
-        // drawNode
-        drawNode(ctx, node, nid, orgPosX, orgPosY);
-
-        // update point for draw right child
-        posX = orgPosX + node.measure.width + config.get("marginNodeTop");
-        if(node.measure.height < node.rHeight) {
-            posY = orgPosY - node.rHeight / 2;
+        posX = posX - node.measure.width - marginNodeTop;
+        if(node.measure.height < node.lHeight) {
+            posY = posY - node.lHeight / 2;
         } else {
-            posY = orgPosY - node.rHeight;
+            posY = posY - node.lHeight;
+        }
+        var child = null, childId;
+        for(var i in node.link.left) {
+            childId = node.link.left[i];
+            child = db.get(childId);
+            if(child.display) {
+                if(node.measure.height < node.lHeight) {
+                    drawNodeTree(ctx, child, childId, posX, posY + child.lHeight / 2);
+                } else {
+                    drawNodeTree(ctx, child, childId, posX, posY + child.lHeight);
+                }
+                posY += child.lHeight + marginNodeTop;
+            }
+        }
+    };
+
+    drawRightChilds = function(ctx, node, nid, posX, posY) {
+        posX = posX + node.measure.width + config.get("marginNodeTop");
+        if(node.measure.height < node.rHeight) {
+            posY = posY - node.rHeight / 2;
+        } else {
+            posY = posY - node.rHeight;
         }
         var child = null, childId;
         for(var i in node.link.right) {
@@ -539,9 +551,20 @@ function Painter(db, users, config) {
                 posY += child.rHeight + marginNodeTop;
             }
         }
+    };
 
-        // update point for draw left child
-        return Math.max(node.measure.height, node.lHeight, node.rHeight);
+    drawNodeTree = function(ctx, node, nid, posX, posY) {
+        if(!node.display) {
+            return 0;
+        }
+        drawNode(ctx, node, nid, posX, posY);
+        if(node.link.left.length > 0) {
+            drawLeftChilds(ctx, node, nid, posX, posY);
+        }
+        if(node.link.right.length > 0) {
+            drawRightChilds(ctx, node, nid, posX, posY);
+        }
+        return;
     };
 
     measureTree = function(ctx, nid) {
