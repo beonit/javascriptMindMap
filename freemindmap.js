@@ -8,9 +8,9 @@ function MapController(mapArgs) {
     this.load = function() { return false; };
     this.bold = function() { return true; };
     this.italic = function() { return true; };
-    this.cut = function() { return true; };
-    this.copy = function() { return true; };
-    this.paste = function() { return true; };
+    this.cut = function() { map.cut(); return true; };
+    this.copy = function() { map.copy(); return true; };
+    this.paste = function() { map.paste(); return true; };
     this.undo = function() { return true; };
     this.redo = function() { return true; };
     this.directRight = function() { map.keyRight(); return true; };

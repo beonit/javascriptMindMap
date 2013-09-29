@@ -1,3 +1,5 @@
+var DIRECT = {ROOT:0, LEFT:1, RIGHT:2};
+
 function ArrayRemoveElement(a, from, to) {
     var rest = a.slice((to||from) + 1 || a.length);
     a.length = from < 0 ? a.length + from : from;
@@ -58,7 +60,7 @@ function Users(rootid) {
 }
 
 function NodeDB() {
-    var nodeDB = [];
+    var nodeDB = [], clipboard = [];
 
     findUpperNidInList = function (nid, list) {
         var i = list.indexOf(nid);
@@ -72,13 +74,101 @@ function NodeDB() {
         return list[i];
     };
 
-    _getChildListHasNid = function(nid) {
+    getChildListHasNid = function(nid) {
         var parents = nodeDB[nodeDB[nid].link.parents];
         if(parents.link.left.indexOf(nid) >= 0) {
             return parents.link.left;
         } else if(parents.link.right.indexOf(nid) >= 0) {
             return parents.link.right;
         }
+    };
+
+    var _getRootId = function(nid) {
+        var node;
+        while(true) {
+            node = nodeDB[nid];
+            if(node.link.parents == nid) {
+                return nid;
+            }
+            nid = node.link.parents;
+        };
+    };
+
+    var _checkDirection = function(nodeid) {
+        var rootid = _getRootId(nodeid);
+        var root = nodeDB[rootid];
+        var node = nodeDB[nodeid];
+        if(rootid == nodeid) {
+            return DIRECT.ROOT;
+        }
+        if(root.drawPos.start.x > node.drawPos.start.x) {
+            return DIRECT.LEFT;
+        } else {
+            return DIRECT.RIGHT;
+        }
+    };
+
+    var _copyToClipboard = function(nid) {
+        if(!nodeDB[nid].display)
+            return;
+        clipboard.push(JSON.parse(JSON.stringify(nodeDB[nid])));
+        var index = clipboard.length - 1;
+        clipboard[index].link.right = [];
+        clipboard[index].link.left = [];
+
+        var newChildIndex;
+        for(var childIndex in nodeDB[nid].link.right) {
+            newChildIndex = _copyToClipboard(nodeDB[nid].link.right[childIndex]);
+            clipboard[index].link.right.push(newChildIndex);
+        }
+        var newChildIndex;
+        for(var childIndex in nodeDB[nid].link.left) {
+            newChildIndex = _copyToClipboard(nodeDB[nid].link.left[childIndex]);
+            clipboard[index].link.left.push(newChildIndex);
+        }
+        return index;
+    };
+
+    var _pastFromClipboard = function(clipId, pid, direct) {
+        var newNode = JSON.parse(JSON.stringify(clipboard[clipId]));
+        newNode.link.parents = pid;
+        newNode.link.left = [];
+        newNode.link.right = [];
+        var newNodeId = _appendChild(pid, newNode);
+
+        var childList = clipboard[clipId].link.right;
+        for(var childIndex in childList) {
+            _pastFromClipboard(childList[childIndex], newNodeId, direct);
+        }
+        return newNodeId;
+    };
+    var _appendChild = function(parentsId, newNode) {
+        nodeDB.push(newNode);
+        var direct = _checkDirection(parentsId);
+        if(direct == DIRECT.RIGHT) {
+            nodeDB[parentsId].link.right.push(nodeDB.length - 1);
+        } else if(direct == DIRECT.LEFT) {
+            nodeDB[parentsId].link.left.push(nodeDB.length - 1);
+        } else if(direct == DIRECT.ROOT) {
+            var leftList = nodeDB[parentsId].link.left;
+            var rightList = nodeDB[parentsId].link.right;
+            if(_getChildListSize(rightList) <= _getChildListSize(leftList)) {
+                rightList.push(nodeDB.length - 1);
+            } else {
+                leftList.push(nodeDB.length - 1);
+            }
+        }
+        return nodeDB.length - 1;
+    };
+
+    var _getChildListSize = function(childList) {
+        var size = 0;
+        for(var i in childList) {
+            if(nodeDB[childList[i]].display) {
+                size++;
+            }
+        }
+        return size;
     };
 
     return {
@@ -89,17 +179,7 @@ function NodeDB() {
         get : function(nid) {
             return nodeDB[nid];
         },
-        getRootId : function(nid) {
-            var node;
-            while(true) {
-                node = nodeDB[nid];
-                if(node.link.parents == nid) {
-                    return nid;
-                }
-                nid = node.link.parents;
-            };
-
-        },
+        getRootId : _getRootId,
         getIdByPoint : function(x, y) {
             var node;
             for(var i in nodeDB) {
@@ -112,41 +192,31 @@ function NodeDB() {
             }
             return null;
         },
-        appendChild : function(parentsId) {
-            nodeDB.push(new Node(parentsId));
-            nodeDB[parentsId].link.right.push(nodeDB.length - 1);
-            return nodeDB.length - 1;
-        },
+        appendChild : _appendChild,
         clone : function(nid) {
             nodeDB.push(JSON.parse(JSON.stringify(nodeDB[nid])));
             return nodeDB.length - 1;
         },
-        deepClone : function(nid) {
-            nodeDB.push(JSON.parse(JSON.stringify(nodeDB[nid])));
-            clondNodeId = nodeDB.length - 1;
-
-            // right
-            oldChilds = nodeDB[nid].link.right;
-            nodeDB[clondNodeId].link.right = [];
-            for(var child in oldChilds) {
-                nodeDB[cloneNodeId].link.right.push(_deepClone(oldChilds[child]));
+        checkDirection : _checkDirection,
+        copyToClipboard : function(nid) {
+            clipboard = [];
+            _copyToClipboard(nid);
+        },
+        pasteFromClipboard : function(nid) {
+            if(clipboard.length <= 0) {
+                return nid;
             }
-            // left
-            oldChilds = nodeDB[nid].link.left;
-            nodeDB[clondNodeId].link.left = [];
-            for(var child in oldChilds) {
-                nodeDB[cloneNodeId].link.left.push(_deepClone(oldChilds[child]));
-            }
-            return cloneNodeId;
+            var newChild = _pastFromClipboard(0, nid, _checkDirection(nid));
+            return newChild;
         },
         findUpperSibling : function(nid) {
-            return findUpperNidInList(nid, _getChildListHasNid(nid));
+            return findUpperNidInList(nid, getChildListHasNid(nid));
         },
         findLowerSibling : function(nid) {
-            return findLowerNidInList(nid, _getChildListHasNid(nid));
+            return findLowerNidInList(nid, getChildListHasNid(nid));
         },
         swapOrder : function(nid1, nid2) {
-            var list = _getChildListHasNid(nid1);
+            var list = getChildListHasNid(nid1);
             var i1 = list.indexOf(nid1);
             var i2 = list.indexOf(nid2);
             var temp = list[i1];
@@ -169,6 +239,7 @@ function NodeDB() {
 
 function Map(config) {
     var users, db, undoList = [], currentUndoIndex = 0, painter;
+    var clipBoard = false;
     (function init() {
         db = new NodeDB();
         var nid = db.create(0);
@@ -176,7 +247,7 @@ function Map(config) {
         painter = new Painter(db, users, config);
     })();
 
-    var DIRECT = {ROOT:0, LEFT:1, RIGHT:2};
+
 
     getLeftChild = function(nid) {
         var child, node = db.get(nid);
@@ -200,20 +271,6 @@ function Map(config) {
         return nid;
     }
 
-    checkDirection = function(nodeid) {
-        var rootid = db.getRootId(nodeid);
-        var root = db.get(rootid);
-        var node = db.get(nodeid);
-        if(rootid == nodeid) {
-            return DIRECT.ROOT;
-        }
-        if(root.drawPos.start.x > node.drawPos.start.x) {
-            return DIRECT.LEFT;
-        } else {
-            return DIRECT.RIGHT;
-        }
-    }
-
     _moveCursor = function(arg) {
         var nid = db.getIdByPoint(arg.x, arg.y);
         var oldNid = users.get("owner");
@@ -226,7 +283,8 @@ function Map(config) {
 
     _append = function(arg) {
         var currentNodeId = users.get(arg["uname"]);
-        var newNodeId = db.appendChild(currentNodeId);
+        var newNode = new Node(currentNodeId);
+        var newNodeId = db.appendChild(currentNodeId, newNode);
         users.update(arg["uname"], newNodeId);
         appendUndo(function() {
                 db.hide(newNodeId);
@@ -264,7 +322,7 @@ function Map(config) {
     };
     _keyLeft = function() {
         var nid = users.get("owner");
-        var direct = checkDirection(nid);
+        var direct = db.checkDirection(nid);
         if(direct == DIRECT.ROOT || direct == DIRECT.LEFT) {
             users.update("owner", getLeftChild(nid));
         } else if(direct == DIRECT.RIGHT) {
@@ -273,7 +331,7 @@ function Map(config) {
     };
     _keyRight = function() {
         var nid = users.get("owner");
-        var direct = checkDirection(nid);
+        var direct = db.checkDirection(nid);
         if(direct == DIRECT.ROOT || direct == DIRECT.RIGHT) {
             users.update("owner", getRightChild(nid));
         } else if(direct == DIRECT.LEFT) {
@@ -283,7 +341,7 @@ function Map(config) {
 
     _keyUp = function(canvasHeight) {
         var nid = users.get("owner");
-        if(checkDirection(nid) == DIRECT.ROOT) {
+        if(db.checkDirection(nid) == DIRECT.ROOT) {
             return;
         }
         // find sibling
@@ -309,7 +367,7 @@ function Map(config) {
     };
     _keyDown = function(canvasHeight) {
         var nid = users.get("owner");
-        if(checkDirection(nid) == DIRECT.ROOT) {
+        if(db.checkDirection(nid) == DIRECT.ROOT) {
             return;
         }
         // find sibling
@@ -359,6 +417,24 @@ function Map(config) {
                 db.swapOrder(nid, siblingid);
             });
     };
+
+    var _copy = function() {
+        var nid = users.get("owner");
+        db.copyToClipboard(nid);
+    };
+
+    var _cut = function() {
+        var nid = users.get("owner");
+        db.copyToClipboard(nid);
+        _hide({"uname":"owner"});
+    };
+
+    var _paste = function() {
+        var nid = users.get("owner");
+        var newChild = db.pasteFromClipboard(nid);
+        users.update("owner", newChild);
+    };
+
     _toJSON = function() { return JSON.stringify(db); };
 
     return {
@@ -378,6 +454,9 @@ function Map(config) {
         keyDown : _keyDown,
         orderUp : _orderUp,
         orderDown : _orderDown,
+        copy : _copy,
+        paste : _paste,
+        cut : _cut,
     };
 }
 
