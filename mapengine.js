@@ -6,6 +6,12 @@ function ArrayRemoveElement(a, from, to) {
     return a.push.apply(a, rest);
 };
 
+function ArrayPushFirst(l, e) {
+    l.reverse();
+    l.push(e);
+    l.reverse();
+};
+
 function CreateMapConfig() {
     var private = {
         'backgroundColor' : "#FFFFFF",
@@ -84,27 +90,36 @@ function NodeDB() {
     };
 
     var _getRootId = function(nid) {
-        var node;
-        while(true) {
-            node = nodeDB[nid];
-            if(node.link.parents == nid) {
-                return nid;
-            }
-            nid = node.link.parents;
+        while(nodeDB[nid].link.parents != nid) {
+            nid = nodeDB[nid].link.parents;
         };
+        return nid;
     };
 
-    var _checkDirection = function(nodeid) {
-        var rootid = _getRootId(nodeid);
-        var root = nodeDB[rootid];
-        var node = nodeDB[nodeid];
-        if(rootid == nodeid) {
+    var _swapChildDirection = function(nid) {
+        var t = nodeDB[nid].link.right;
+        nodeDB[nid].link.right = nodeDB[nid].link.left;
+        nodeDB[nid].link.left = t;
+        for(var i in nodeDB[nid].link.right) {
+            _swapChildDirection(nodeDB[nid].link.right[i]);
+        }
+        for(var i in nodeDB[nid].link.left) {
+            _swapChildDirection(nodeDB[nid].link.left[i]);
+        }
+    };
+
+    var _checkDirection = function(nid) {
+        if(nodeDB[nid].link.parents == nid) {
             return DIRECT.ROOT;
         }
-        if(root.drawPos.start.x > node.drawPos.start.x) {
-            return DIRECT.LEFT;
-        } else {
+        var rootid = _getRootId(nid);
+        while(nodeDB[nid].link.parents != rootid) {
+            nid = nodeDB[nid].link.parents;
+        }
+        if(nodeDB[rootid].link.right.indexOf(nid) >= 0) {
             return DIRECT.RIGHT;
+        } else {
+            return DIRECT.LEFT;
         }
     };
 
@@ -124,7 +139,7 @@ function NodeDB() {
         var newChildIndex;
         for(var childIndex in nodeDB[nid].link.left) {
             newChildIndex = _copyToClipboard(nodeDB[nid].link.left[childIndex]);
-            clipboard[index].link.left.push(newChildIndex);
+            clipboard[index].link.right.push(newChildIndex);
         }
         return index;
     };
@@ -222,6 +237,20 @@ function NodeDB() {
             var temp = list[i1];
             list[i1] = list[i2];
             list[i2] = temp;
+        },
+        moveToLeftNode : function(pid, nid) {
+            var rightList = nodeDB[pid].link.right;
+            var nidIndex = rightList.indexOf(nid);
+            ArrayRemoveElement(rightList, nidIndex, nidIndex);
+            nodeDB[pid].link.left.splice(0, 0, nid);
+            _swapChildDirection(nid);
+        },
+        moveToRightNode : function(pid, nid) {
+            var leftList = nodeDB[pid].link.left;
+            var nidIndex = leftList.indexOf(nid);
+            ArrayRemoveElement(leftList, nidIndex, nidIndex);
+            nodeDB[pid].link.right.push(nid);
+            _swapChildDirection(nid);
         },
         getParentsId : function(nid) { return nodeDB[nid].link.parents },
         replace : function(nid, node) { nodeDB[nid] = node; },
@@ -394,28 +423,48 @@ function Map(config) {
     _orderUp = function() {
         var nid = users.get("owner");
         var siblingid = db.findUpperSibling(nid);
-        if(!siblingid) {
-            return;
+        if(siblingid) {
+            db.swapOrder(nid, siblingid);
+            appendUndo(function() {
+                    db.swapOrder(nid, siblingid);
+                }, function() {
+                    db.swapOrder(nid, siblingid);
+                });
+        } else if(!siblingid && DIRECT.LEFT == db.checkDirection(nid)) {
+            var parentsId = db.getParentsId(nid);
+            var rootId = db.getRootId(nid);
+            if(parentsId == rootId) {
+                db.moveToRightNode(parentsId, nid);
+                appendUndo(function() {
+                        db.moveToLeftNode(parentsId, nid);
+                    }, function() {
+                        db.moveToRightNode(parentsId, nid);
+                    });
+            }
         }
-        db.swapOrder(nid, siblingid);
-        appendUndo(function() {
-                db.swapOrder(nid, siblingid);
-            }, function() {
-                db.swapOrder(nid, siblingid);
-            });
     };
     _orderDown = function() {
         var nid = users.get("owner");
         var siblingid = db.findLowerSibling(nid);
-        if(!siblingid) {
-            return;
+        if(siblingid) {
+            db.swapOrder(nid, siblingid);
+            appendUndo(function() {
+                    db.swapOrder(nid, siblingid);
+                }, function() {
+                    db.swapOrder(nid, siblingid);
+                });
+        } else if(!siblingid && DIRECT.RIGHT == db.checkDirection(nid)) {
+            var parentsId = db.getParentsId(nid);
+            var rootId = db.getRootId(nid);
+            if(parentsId == rootId) {
+                db.moveToLeftNode(parentsId, nid);
+                appendUndo(function() {
+                        db.moveToRightNode(parentsId, nid);
+                    }, function() {
+                        db.moveToLeftNode(parentsId, nid);
+                    });
+            }
         }
-        db.swapOrder(nid, siblingid);
-        appendUndo(function() {
-                db.swapOrder(nid, siblingid);
-            }, function() {
-                db.swapOrder(nid, siblingid);
-            });
     };
 
     var _copy = function() {
@@ -431,8 +480,7 @@ function Map(config) {
 
     var _paste = function() {
         var nid = users.get("owner");
-        var newChild = db.pasteFromClipboard(nid);
-        users.update("owner", newChild);
+        nid = db.pasteFromClipboard(nid);
     };
 
     _toJSON = function() { return JSON.stringify(db); };
