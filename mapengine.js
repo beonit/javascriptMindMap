@@ -66,7 +66,7 @@ function Users(rootid) {
 }
 
 function NodeDB() {
-    var nodeDB = [], clipboard = [];
+    var nodeDB = [], clipboard = [], roots = [0];
 
     findUpperNidInList = function (nid, list) {
         var i = list.indexOf(nid);
@@ -89,7 +89,7 @@ function NodeDB() {
         }
     };
 
-    var _getRootId = function(nid) {
+    var _findNodeRoot = function(nid) {
         while(nodeDB[nid].link.parents != nid) {
             nid = nodeDB[nid].link.parents;
         };
@@ -112,7 +112,7 @@ function NodeDB() {
         if(nodeDB[nid].link.parents == nid) {
             return DIRECT.ROOT;
         }
-        var rootid = _getRootId(nid);
+        var rootid = _findNodeRoot(nid);
         while(nodeDB[nid].link.parents != rootid) {
             nid = nodeDB[nid].link.parents;
         }
@@ -187,6 +187,11 @@ function NodeDB() {
     };
 
     return {
+        createRoot : function() {
+            nodeDB.push(new Node(nodeDB.length));
+            roots.push(nodeDB.length - 1);
+            return nodeDB.length - 1;
+        },
         create : function(parentsId) {
             nodeDB.push(new Node(parentsId));
             return nodeDB.length - 1;
@@ -194,7 +199,7 @@ function NodeDB() {
         get : function(nid) {
             return nodeDB[nid];
         },
-        getRootId : _getRootId,
+        findNodeRoot : _findNodeRoot,
         getIdByPoint : function(x, y) {
             var node;
             for(var i in nodeDB) {
@@ -253,6 +258,7 @@ function NodeDB() {
             _swapChildDirection(nid);
         },
         getParentsId : function(nid) { return nodeDB[nid].link.parents },
+        getRoots : function() { return roots; },
         replace : function(nid, node) { nodeDB[nid] = node; },
         hide : function(nid) { nodeDB[nid].display = false; },
         show : function(nid) { nodeDB[nid].display = true; },
@@ -267,11 +273,12 @@ function NodeDB() {
 }
 
 function Map(config) {
-    var users, db, undoList = [], currentUndoIndex = 0, painter;
+    var users, db, undoList = [], currentUndoIndex = 0;
+    var painter;
     var clipBoard = false;
     (function init() {
         db = new NodeDB();
-        var nid = db.create(0);
+        var nid = db.createRoot();
         users = new Users(nid);
         painter = new Painter(db, users, config);
     })();
@@ -311,13 +318,13 @@ function Map(config) {
     }
 
     _append = function(arg) {
-        var currentNodeId = users.get(arg["uname"]);
-        var newNode = new Node(currentNodeId);
-        var newNodeId = db.appendChild(currentNodeId, newNode);
+        var currentNid = users.get(arg["uname"]);
+        var newNode = new Node(currentNid);
+        var newNodeId = db.appendChild(currentNid, newNode);
         users.update(arg["uname"], newNodeId);
         appendUndo(function() {
                 db.hide(newNodeId);
-                users.update(arg["uname"], currentNodeId);
+                users.update(arg["uname"], currentNid);
             } , function() {
                 db.show(newNodeId);
                 users.update(arg["uname"], newNodeId);
@@ -325,17 +332,32 @@ function Map(config) {
     };
 
     _hide = function(arg) {
-        var currentNodeId = users.get(arg["uname"]);
-        var parentsNodeId = db.getParentsId(currentNodeId);
-        users.update(arg["uname"], parentsNodeId);
-        db.hide(currentNodeId);
-        appendUndo(function() {
-                db.show(currentNodeId);
-                users.update(arg["uname"], currentNodeId);
-            }, function() {
-                db.hide(currentNodeId);
-                users.update(arg["uname"], parentsNodeId);
-            });
+        var currentNid = users.get(arg["uname"]);
+        if(db.findNodeRoot(currentNid) == currentNid) {
+            db.hide(currentNid);
+            var newNodeId = db.createRoot();
+            users.update(arg["uname"], newNodeId);
+            appendUndo(function() {
+                    db.hide(newNodeId);
+                    db.show(currentNid);
+                    users.update(arg["uname"], currentNid);
+                }, function() {
+                    db.hide(currentNid);
+                    db.show(newNodeId);
+                    users.update(arg["uname"], newNodeId);
+                });
+        } else {
+            var parentsNodeId = db.getParentsId(currentNid);
+            users.update(arg["uname"], parentsNodeId);
+            db.hide(currentNid);
+            appendUndo(function() {
+                    db.show(currentNid);
+                    users.update(arg["uname"], currentNid);
+                }, function() {
+                    db.hide(currentNid);
+                    users.update(arg["uname"], parentsNodeId);
+                });
+        }
     };
 
     _undo = function() { undoList[--currentUndoIndex].undo(); };
@@ -432,7 +454,7 @@ function Map(config) {
                 });
         } else if(!siblingid && DIRECT.LEFT == db.checkDirection(nid)) {
             var parentsId = db.getParentsId(nid);
-            var rootId = db.getRootId(nid);
+            var rootId = db.findNodeRoot(nid);
             if(parentsId == rootId) {
                 db.moveToRightNode(parentsId, nid);
                 appendUndo(function() {
@@ -455,7 +477,7 @@ function Map(config) {
                 });
         } else if(!siblingid && DIRECT.RIGHT == db.checkDirection(nid)) {
             var parentsId = db.getParentsId(nid);
-            var rootId = db.getRootId(nid);
+            var rootId = db.findNodeRoot(nid);
             if(parentsId == rootId) {
                 db.moveToLeftNode(parentsId, nid);
                 appendUndo(function() {
@@ -483,11 +505,19 @@ function Map(config) {
         nid = db.pasteFromClipboard(nid);
     };
 
+    var _draw = function(args) {
+        var roots = db.getRoots();
+        for(var i in roots) {
+            args["root"] = roots[i];
+            painter.drawTree(args);
+        }
+    }
+
     _toJSON = function() { return JSON.stringify(db); };
 
     return {
-        draw : painter.drawTree,
-        moveRoot : painter.moveRoot,
+        draw : _draw,
+        moveCanvas : painter.moveCanvas,
         moveCursor : _moveCursor,
         edit : _edit,
         append : _append,
@@ -510,24 +540,27 @@ function Map(config) {
 
 function Painter(db, users, config) {
 
-    var rootX = 0, rootY = 0;
+    var canvasX = 0, canvasY = 0;
 
-    _moveRoot = function(arg) {
-        rootX += arg["x"];
-        rootY += arg["y"];
+    _moveCanvas = function(arg) {
+        canvasX += arg["x"];
+        canvasY += arg["y"];
     }
 
     _drawNodeAndChilds = function(arg) {
-        var ctx = arg["ctx"];
-        var node = db.get(0);
-        var nid = 0;
-        var width = arg["width"];
-        var height = arg["height"];
+        var rootId = arg["root"];
+        var node = db.get(rootId);
+        if(node.display) {
+            var ctx = arg["ctx"];
+            var nid = rootId;
+            var width = arg["width"];
+            var height = arg["height"];
 
-        measureTree(ctx, 0);
-        var posX = width / 2 - rootX - ctx.measureText(node.data).width / 2;
-        var posY = height / 2 - rootY;
-        drawNodeTree(ctx, node, nid, posX, posY);
+            measureTree(ctx, rootId);
+            var posX = width / 2 - canvasX - ctx.measureText(node.data).width / 2;
+            var posY = height / 2 - canvasY;
+            drawNodeTree(ctx, node, nid, posX, posY);
+        }
     }
 
     drawSetup = function(ctx, node) {
@@ -656,7 +689,7 @@ function Painter(db, users, config) {
     };
 
     return {
-        moveRoot : _moveRoot,
+        moveCanvas : _moveCanvas,
         drawTree : _drawNodeAndChilds,
     }
 }

@@ -150,7 +150,7 @@ function MapController(mapArgs) {
             var currentTime = Date.now();
             if(e.button == 0 && leftDown && currentTime - lastDrawTime > 33) {
                 // do drag
-                map.moveRoot({"x":posDownX - e.x, "y":posDownY - e.y});
+                map.moveCanvas({"x":posDownX - e.x, "y":posDownY - e.y});
                 posDownX = e.x;
                 posDownY = e.y;
                 drawAll();
