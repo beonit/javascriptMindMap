@@ -15,8 +15,8 @@ function ArrayPushFirst(l, e) {
 function CreateMapConfig() {
     var private = {
         'backgroundColor' : "#FFFFFF",
-        'marginNodeTop' : 10,
-        'marginNodeLeft' : 30,
+        'marginNodeTop' : 15,
+        'marginNodeLeft' : 40,
         'cursorColor' : "#CCCCCC",
         'cursorMargin' : 3,
     };
@@ -32,7 +32,11 @@ function Node(parentsId) {
     // data
     this.mimetype = "plain/text";
     this.data = "default";
-    this.font = {face : "Arial", size : 15, color : "#000000", bgColor : "#ffffff"};
+    this.font = { face : "Arial"
+                    , size : 15
+                    , color : "#000000"
+                    , bgColor : "#ffffff"
+                    , edge : "#000000" };
     // link
     this.link = {left : [], right : [], parents : parentsId};
     // draw
@@ -66,7 +70,7 @@ function Users(rootid) {
 }
 
 function NodeDB() {
-    var nodeDB = [], clipboard = [], roots = [0];
+    var nodeDB = [], clipboard = [], roots = [];
 
     findUpperNidInList = function (nid, list) {
         var i = list.indexOf(nid);
@@ -584,14 +588,49 @@ function Painter(db, users, config) {
         drawSetup(ctx, node);
         ctx.fillText(node.data, posX, posY);
 
+        // draw under line
+        ctx.beginPath();
+        ctx.fillStyle = node.font.edge;
+        ctx.lineWith = 1;
+        ctx.moveTo(posX, posY + 2);
+        ctx.lineTo(posX + node.measure.width + margin, posY + 2);
+        ctx.stroke();
+        ctx.closePath();
+
         // update node draw pos
         node.drawPos.start = {x : posX, y : posY - node.measure.height};
         node.drawPos.end = {x : posX + node.measure.width, y : posY};
     };
 
-    drawLeftChilds = function(ctx, node, nid, posX, posY) {
-        var marginNodeTop = config.get("marginNodeTop");
-        posX = posX - node.measure.width - marginNodeTop;
+    var drawLeftEdge = function(ctx, node, fromX, fromY, toX, toY) {
+        ctx.beginPath();
+        ctx.fillStyle = node.font.edge;
+        ctx.lineWidth = 1;
+        var EdgeBezier = config.get("marginNodeLeft") / 2;
+        ctx.moveTo(fromX, fromY + 2);
+        ctx.bezierCurveTo(fromX - EdgeBezier, fromY + 2, toX + EdgeBezier
+            , toY + 2, toX, toY + 2);
+        ctx.stroke();
+        ctx.closePath();
+    };
+
+    var drawRightEdge = function(ctx, node, fromX, fromY, toX, toY) {
+        ctx.beginPath();
+        ctx.fillStyle = node.font.edge;
+        ctx.lineWidth = 1;
+        var EdgeBezier = config.get("marginNodeLeft") / 2;
+        ctx.moveTo(fromX, fromY + 2);
+        ctx.bezierCurveTo(fromX + EdgeBezier, fromY + 2, toX - EdgeBezier
+            , toY + 2, toX, toY + 2);
+        ctx.stroke();
+        ctx.closePath();
+    };
+
+    var drawLeftChilds = function(ctx, node, nid, posX, posY) {
+        var fromX = posX;
+        var fromY = posY;
+        var marginNodeLeft = config.get("marginNodeLeft");
+        posX = posX - node.measure.width - marginNodeLeft;
         if(node.measure.height < node.lHeight) {
             posY = posY - node.lHeight / 2;
         } else {
@@ -603,8 +642,12 @@ function Painter(db, users, config) {
             child = db.get(childId);
             if(child.display) {
                 if(node.measure.height < node.lHeight) {
+                    drawLeftEdge(ctx, child, fromX, fromY
+                        , fromX - marginNodeLeft, posY + child.rHeight / 2);
                     drawNodeTree(ctx, child, childId, posX, posY + child.lHeight / 2);
                 } else {
+                    drawLeftEdge(ctx, child, fromX, fromY
+                        , fromX - marginNodeLeft, posY + child.rHeight);
                     drawNodeTree(ctx, child, childId, posX, posY + child.lHeight);
                 }
                 posY += child.lHeight + marginNodeTop;
@@ -612,8 +655,10 @@ function Painter(db, users, config) {
         }
     };
 
-    drawRightChilds = function(ctx, node, nid, posX, posY) {
-        posX = posX + node.measure.width + config.get("marginNodeTop");
+    var drawRightChilds = function(ctx, node, nid, posX, posY) {
+        var fromX = posX + node.measure.width;
+        var fromY = posY;
+        posX = posX + node.measure.width + config.get("marginNodeLeft");
         if(node.measure.height < node.rHeight) {
             posY = posY - node.rHeight / 2;
         } else {
@@ -625,8 +670,12 @@ function Painter(db, users, config) {
             child = db.get(childId);
             if(child.display) {
                 if(node.measure.height < node.rHeight) {
+                    drawRightEdge(ctx, child, fromX, fromY
+                        , posX, posY + child.rHeight / 2);
                     drawNodeTree(ctx, child, childId, posX, posY + child.rHeight / 2);
                 } else {
+                    drawRightEdge(ctx, child, fromX, fromY
+                        , posX, posY + child.rHeight);
                     drawNodeTree(ctx, child, childId, posX, posY + child.rHeight);
                 }
                 posY += child.rHeight + marginNodeTop;

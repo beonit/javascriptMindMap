@@ -72,6 +72,7 @@ function MapController(mapArgs) {
         var canvas = document.getElementById(mapArgs.mapId),
         container = document.getElementById(mapArgs.containerId),
         ctx = canvas.getContext('2d');
+        ctx.lineCap = 'round';
 
         // resize the canvas to fill browser window dynamically
         window.addEventListener('resize', resizeCanvas, false);
