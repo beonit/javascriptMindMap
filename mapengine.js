@@ -643,11 +643,11 @@ function Painter(db, users, config) {
             if(child.display) {
                 if(node.measure.height < node.lHeight) {
                     drawLeftEdge(ctx, child, fromX, fromY
-                        , fromX - marginNodeLeft, posY + child.rHeight / 2);
+                        , fromX - marginNodeLeft, posY + child.lHeight / 2);
                     drawNodeTree(ctx, child, childId, posX, posY + child.lHeight / 2);
                 } else {
                     drawLeftEdge(ctx, child, fromX, fromY
-                        , fromX - marginNodeLeft, posY + child.rHeight);
+                        , fromX - marginNodeLeft, posY + child.lHeight);
                     drawNodeTree(ctx, child, childId, posX, posY + child.lHeight);
                 }
                 posY += child.lHeight + marginNodeTop;
