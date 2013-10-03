@@ -3,41 +3,49 @@ function MapController(mapArgs) {
     var editMode = false;
     var canvasWidth, canvasHeight;
 
-    this.enter = function() { return true; };
-    this.save = function() { return false; };
-    this.load = function() { return false; };
-    this.bold = function() { return true; };
-    this.italic = function() { return true; };
-    this.cut = function() { map.cut(); return true; };
-    this.copy = function() { map.copy(); return true; };
-    this.paste = function() { map.paste(); return true; };
-    this.undo = function() { return true; };
-    this.redo = function() { return true; };
-    this.directRight = function() { map.keyRight(); return true; };
-    this.directUp = function() { map.keyUp(canvasHeight); return true; };
-    this.directLeft = function() { map.keyLeft(); return true; };
-    this.directDown = function() { map.keyDown(canvasHeight); return true; };
-    this.altLeft = function() { return true; };
-    this.altUp = function() { map.orderUp(); return true; };
-    this.altRight = function() { return true; };
-    this.altDown = function() { map.orderDown(); return true; };
-    this.insert = function() {
+    this.enter = function(e) { return true; };
+    this.insertSibling = function(e) {
+        if(e.shiftKey)
+            map.addBeforeSibling();
+        else
+            map.addAfterSibling();
+        return true;
+    };
+    this.save = function(e) { return false; };
+    this.load = function(e) { return false; };
+    this.bold = function(e) { return true; };
+    this.italic = function(e) { return true; };
+    this.cut = function(e) { map.cut(); return true; };
+    this.copy = function(e) { map.copy(); return true; };
+    this.paste = function(e) { map.paste(); return true; };
+    this.undo = function(e) { return true; };
+    this.redo = function(e) { return true; };
+    this.directRight = function(e) { map.keyRight(); return true; };
+    this.directUp = function(e) { map.keyUp(canvasHeight); return true; };
+    this.directLeft = function(e) { map.keyLeft(); return true; };
+    this.directDown = function(e) { map.keyDown(canvasHeight); return true; };
+    this.altLeft = function(e) { return true; };
+    this.altUp = function(e) { map.orderUp(); return true; };
+    this.altRight = function(e) { return true; };
+    this.altDown = function(e) { map.orderDown(); return true; };
+    this.insert = function(e) {
         map.append({"uname":"owner"});
         return true;
     };
-    this.delete = function() {
+    this.delete = function(e) {
         map.remove({"uname":"owner"});
         return true;
     };
-    this.home = function() { return true; };
-    this.f1 = function() { return true; };
-    this.f2 = function() { return true; };
+    this.home = function(e) { return true; };
+    this.f1 = function(e) { return true; };
+    this.f2 = function(e) { return true; };
 
     var editModeFuncs = {
         13 : this.enter,
     };
 
     var nonEditModeKey = {
+        13 : this.insertSibling,
         39 : this.directRight,
         38 : this.directUp,
         37 : this.directLeft,
@@ -101,18 +109,18 @@ function MapController(mapArgs) {
             keyPropagation = true;
             if(editMode) {
                 if(editModeFuncs[e.keyCode] != null) {
-                    keyPropagation = editModeFuncs[e.keyCode]();
+                    keyPropagation = editModeFuncs[e.keyCode](e);
                 }
             } else if(e.ctrlKey){
                 if(ctrlFuncs[e.keyCode] != null) {
-                    keyPropagation = ctrlFuncs[e.keyCode]();
+                    keyPropagation = ctrlFuncs[e.keyCode](e);
                 }
             } else if(e.altKey){
                 if(altFuncs[e.keyCode] != null) {
-                    keyPropagation = altFuncs[e.keyCode]();
+                    keyPropagation = altFuncs[e.keyCode](e);
                 }
             } else if(nonEditModeKey[e.keyCode] != null) {
-                keyPropagation = nonEditModeKey[e.keyCode]();
+                keyPropagation = nonEditModeKey[e.keyCode](e);
             }
             if(!keyPropagation) {
                 e.preventDefault();

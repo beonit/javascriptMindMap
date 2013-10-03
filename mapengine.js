@@ -100,6 +100,11 @@ function NodeDB() {
         return nid;
     };
 
+    var _create = function(parentsId) {
+        nodeDB.push(new Node(parentsId));
+        return nodeDB.length - 1;
+    }
+
     var _swapChildDirection = function(nid) {
         var t = nodeDB[nid].link.right;
         nodeDB[nid].link.right = nodeDB[nid].link.left;
@@ -196,10 +201,7 @@ function NodeDB() {
             roots.push(nodeDB.length - 1);
             return nodeDB.length - 1;
         },
-        create : function(parentsId) {
-            nodeDB.push(new Node(parentsId));
-            return nodeDB.length - 1;
-        },
+        create : _create,
         get : function(nid) {
             return nodeDB[nid];
         },
@@ -217,6 +219,34 @@ function NodeDB() {
             return null;
         },
         appendChild : _appendChild,
+        addAfterSibling : function(nid) {
+            var direct = _checkDirection(nid);
+            var parentsId = nodeDB[nid].link.parents;
+            var siblingList;
+            if(direct == DIRECT.RIGHT) {
+                siblingList = nodeDB[parentsId].link.right;
+            } else if(direct == DIRECT.LEFT) {
+                siblingList = nodeDB[parentsId].link.left;
+            }
+            var childIndex = siblingList.indexOf(nid);
+            nid = _create(parentsId);
+            siblingList.splice(childIndex + 1, 0, nid);
+            return nid;
+        },
+        addBeforeSibling : function(nid) {
+            var direct = _checkDirection(nid);
+            var parentsId = nodeDB[nid].link.parents;
+            var siblingList;
+            if(direct == DIRECT.RIGHT) {
+                siblingList = nodeDB[parentsId].link.right;
+            } else if(direct == DIRECT.LEFT) {
+                siblingList = nodeDB[parentsId].link.left;
+            }
+            var childIndex = siblingList.indexOf(nid);
+            nid = _create(parentsId);
+            siblingList.splice(childIndex, 0, nid);
+            return nid;
+        },
         clone : function(nid) {
             nodeDB.push(JSON.parse(JSON.stringify(nodeDB[nid])));
             return nodeDB.length - 1;
@@ -371,6 +401,16 @@ function Map(config) {
         undoList.push({undo : undoFunc, redo : redoFunc});
         currentUndoIndex++;
     };
+    _addAfterSibling = function() {
+        var nid = users.get("owner");
+        nid = db.addAfterSibling(nid);
+        users.update("owner", nid);
+    },
+    _addBeforeSibling = function() {
+        var nid = users.get("owner");
+        nid = db.addBeforeSibling(nid);
+        users.update("owner", nid);
+    },
     _clone = function() {};
     _edit = function() {
 
@@ -525,6 +565,8 @@ function Map(config) {
         moveCursor : _moveCursor,
         edit : _edit,
         append : _append,
+        addAfterSibling : _addAfterSibling,
+        addBeforeSibling : _addBeforeSibling,
         remove : _hide,
         clone : _clone,
         undo : _undo,
