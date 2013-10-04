@@ -2,6 +2,7 @@ function MapController(mapArgs) {
     var map = new Map(mapArgs["config"]);
     var editMode = false;
     var canvasWidth, canvasHeight;
+    var editor = new Editor();
 
     this.enter = function(e) { return true; };
     this.insertSibling = function(e) {
@@ -38,7 +39,13 @@ function MapController(mapArgs) {
     };
     this.home = function(e) { return true; };
     this.f1 = function(e) { return true; };
-    this.f2 = function(e) { return true; };
+    this.f2 = function(e) {
+        var node = map.getClone({"uname":"owner"});
+        editor[node.mimetype](node, function(n) {
+                map.edit({"uname":"owner", "node":n});
+            });
+        return true;
+    };
 
     var editModeFuncs = {
         13 : this.enter,
@@ -54,7 +61,7 @@ function MapController(mapArgs) {
         46 : this.delete,
         36 : this.home,
         112 : this.f1,
-        112 : this.f2,
+        113 : this.f2,
     };
 
     var ctrlFuncs = {
@@ -77,9 +84,9 @@ function MapController(mapArgs) {
     }
 
     this.FreeMindmapLoad = function (event) {
-        var canvas = document.getElementById(mapArgs.mapId),
-        container = document.getElementById(mapArgs.containerId),
-        ctx = canvas.getContext('2d');
+        var canvas = document.getElementById(mapArgs.mapId);
+        var container = document.getElementById(mapArgs.containerId);
+        var ctx = canvas.getContext('2d');
         ctx.lineCap = 'round';
 
         // resize the canvas to fill browser window dynamically

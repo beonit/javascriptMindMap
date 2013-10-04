@@ -30,7 +30,7 @@ function CreateMapConfig() {
 
 function Node(parentsId) {
     // data
-    this.mimetype = "plain/text";
+    this.mimetype = "text/plain";
     this.data = "default";
     this.font = { face : "Arial"
                     , size : 15
@@ -105,6 +105,11 @@ function NodeDB() {
         return nodeDB.length - 1;
     }
 
+    var _addNode = function(n) {
+        nodeDB.push(n);
+        return nodeDB.length - 1;
+    }
+
     var _swapChildDirection = function(nid) {
         var t = nodeDB[nid].link.right;
         nodeDB[nid].link.right = nodeDB[nid].link.left;
@@ -115,6 +120,12 @@ function NodeDB() {
         for(var i in nodeDB[nid].link.left) {
             _swapChildDirection(nodeDB[nid].link.left[i]);
         }
+    };
+
+    var _swap = function(nid1, nid2) {
+        var n = nodeDB[nid1];
+        nodeDB[nid1] = nodeDB[nid2];
+        nodeDB[nid2] = n;
     };
 
     var _checkDirection = function(nid) {
@@ -202,6 +213,7 @@ function NodeDB() {
             return nodeDB.length - 1;
         },
         create : _create,
+        addNode : _addNode,
         get : function(nid) {
             return nodeDB[nid];
         },
@@ -251,6 +263,7 @@ function NodeDB() {
             nodeDB.push(JSON.parse(JSON.stringify(nodeDB[nid])));
             return nodeDB.length - 1;
         },
+        swap : _swap,
         checkDirection : _checkDirection,
         copyToClipboard : function(nid) {
             clipboard = [];
@@ -317,8 +330,6 @@ function Map(config) {
         painter = new Painter(db, users, config);
     })();
 
-
-
     getLeftChild = function(nid) {
         var child, node = db.get(nid);
         for(var i in node.link.left) {
@@ -339,6 +350,11 @@ function Map(config) {
             }
         }
         return nid;
+    }
+
+    var _getClone = function(arg) {
+        var nid = users.get(arg["uname"]);
+        return JSON.parse(JSON.stringify(db.get(nid)));
     }
 
     _moveCursor = function(arg) {
@@ -403,17 +419,28 @@ function Map(config) {
     };
     _addAfterSibling = function() {
         var nid = users.get("owner");
-        nid = db.addAfterSibling(nid);
-        users.update("owner", nid);
+        if(db.checkDirection(nid) != DIRECT.ROOT) {
+            nid = db.addAfterSibling(nid);
+            users.update("owner", nid);
+        }
     },
     _addBeforeSibling = function() {
         var nid = users.get("owner");
-        nid = db.addBeforeSibling(nid);
-        users.update("owner", nid);
+        if(db.checkDirection(nid) != DIRECT.ROOT) {
+            nid = db.addBeforeSibling(nid);
+            users.update("owner", nid);
+        }
     },
     _clone = function() {};
-    _edit = function() {
-
+    var _edit = function(args) {
+        var nid = users.get(args["uname"]);
+        var newNid = db.addNode(args["node"]);
+        db.swap(nid, newNid);
+        appendUndo(function() {
+            db.swap(newNid, nid);
+        }, function() {
+            db.swap(nid, newNid);
+        });
     };
     _keyLeft = function() {
         var nid = users.get("owner");
@@ -563,6 +590,7 @@ function Map(config) {
         draw : _draw,
         moveCanvas : painter.moveCanvas,
         moveCursor : _moveCursor,
+        getClone : _getClone,
         edit : _edit,
         append : _append,
         addAfterSibling : _addAfterSibling,
@@ -672,7 +700,6 @@ function Painter(db, users, config) {
         var fromX = posX;
         var fromY = posY;
         var marginNodeLeft = config.get("marginNodeLeft");
-        posX = posX - node.measure.width - marginNodeLeft;
         if(node.measure.height < node.lHeight) {
             posY = posY - node.lHeight / 2;
         } else {
@@ -686,11 +713,15 @@ function Painter(db, users, config) {
                 if(node.measure.height < node.lHeight) {
                     drawLeftEdge(ctx, child, fromX, fromY
                         , fromX - marginNodeLeft, posY + child.lHeight / 2);
-                    drawNodeTree(ctx, child, childId, posX, posY + child.lHeight / 2);
+                    drawNodeTree(ctx, child, childId
+                        , fromX - child.measure.width - marginNodeLeft
+                        , posY + child.lHeight / 2);
                 } else {
                     drawLeftEdge(ctx, child, fromX, fromY
                         , fromX - marginNodeLeft, posY + child.lHeight);
-                    drawNodeTree(ctx, child, childId, posX, posY + child.lHeight);
+                    drawNodeTree(ctx, child, childId
+                        , fromX - child.measure.width - marginNodeLeft
+                        , posY + child.lHeight);
                 }
                 posY += child.lHeight + marginNodeTop;
             }
