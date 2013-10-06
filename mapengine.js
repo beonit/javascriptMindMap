@@ -638,6 +638,7 @@ function Map(config) {
         cut : cut,
         draw : draw,
         getClone : getClone,
+        edit : edit,
         keyDown : keyDown,
         keyLeft : keyLeft,
         keyRight : keyRight,
@@ -819,7 +820,8 @@ function Painter(db, users, config) {
         marginNodeLeft = config.get("marginNodeLeft");
 
         // measure setup
-        node.measure.width = ctx.measureText(node.data).width;
+        node.measure.width = ctx.measureText(node.data).width
+             + config.get("cursorMargin");
         node.measure.height = node.font.size;
 
         // mesure right child size

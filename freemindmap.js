@@ -1,17 +1,13 @@
 function MapController(mapArgs) {
     var map = new Map(mapArgs["config"]);
-    var editMode = false;
     var canvasWidth, canvasHeight;
-    var editor = new Editor();
+    var editor = new Editor(mapArgs);
+    var EDITMODE = {NONE:0, EDITING:1, SUBMIT:2};
+    var editMode = EDITMODE.NONE;
 
     this.enter = function(e) { return true; };
-    this.insertSibling = function(e) {
-        if(e.shiftKey)
-            map.addBeforeSibling();
-        else
-            map.addAfterSibling();
-        return true;
-    };
+    this.insertAfterSibling = function(e) { map.addAfterSibling(); return true; };
+    this.insertBeforeSibling = function(e) { map.addBeforeSibling(); return true; };
     this.save = function(e) { return false; };
     this.load = function(e) { return false; };
     this.bold = function(e) { return true; };
@@ -40,10 +36,15 @@ function MapController(mapArgs) {
     this.home = function(e) { return true; };
     this.f1 = function(e) { return true; };
     this.f2 = function(e) {
+        editMode = EDITMODE.EDITING;
         var node = map.getClone({"uname":"owner"});
-        editor[node.mimetype](node, function(n) {
+        editor[node.mimetype](node
+            , {13 : function(n) {
+                editMode = EDITMODE.SUBMIT;
                 map.edit({"uname":"owner", "node":n});
-            });
+            }, 27: function(n) {
+                editMode = EDITMODE.NONE;
+            } });
         return true;
     };
 
@@ -52,7 +53,7 @@ function MapController(mapArgs) {
     };
 
     var nonEditModeKey = {
-        13 : this.insertSibling,
+        13 : this.insertAfterSibling,
         39 : this.directRight,
         38 : this.directUp,
         37 : this.directLeft,
@@ -81,6 +82,10 @@ function MapController(mapArgs) {
         38 : this.altUp,
         39 : this.altRight,
         40 : this.altDown,
+    }
+
+    var shiftFuncs = {
+        13 : this.insertBeforeSibling
     }
 
     this.FreeMindmapLoad = function (event) {
@@ -114,27 +119,27 @@ function MapController(mapArgs) {
         window.addEventListener("keydown", keydownHandler, false);
         function keydownHandler(e) {
             keyPropagation = true;
-            if(editMode) {
-                if(editModeFuncs[e.keyCode] != null) {
-                    keyPropagation = editModeFuncs[e.keyCode](e);
-                }
-            } else if(e.ctrlKey){
-                if(ctrlFuncs[e.keyCode] != null) {
+            if(editMode == EDITMODE.NONE) {
+                if(e.ctrlKey && ctrlFuncs[e.keyCode]){
                     keyPropagation = ctrlFuncs[e.keyCode](e);
-                }
-            } else if(e.altKey){
-                if(altFuncs[e.keyCode] != null) {
+                } else if(e.altKey && altFuncs[e.keyCode]){
                     keyPropagation = altFuncs[e.keyCode](e);
+                } else if(e.shiftKey && shiftFuncs[e.keyCode]) {
+                    keyPropagation = shiftFuncs[e.keyCode](e);
+                } else if(nonEditModeKey[e.keyCode]) {
+                    keyPropagation = nonEditModeKey[e.keyCode](e);
                 }
-            } else if(nonEditModeKey[e.keyCode] != null) {
-                keyPropagation = nonEditModeKey[e.keyCode](e);
+                if(!keyPropagation) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                // console.log(e.keyCode);
+                drawAll();
+            } else if(editMode == EDITMODE.EDITING) {
+            } else if(editMode == EDITMODE.SUBMIT) {
+                editMode = EDITMODE.NONE;
+                drawAll();
             }
-            if(!keyPropagation) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            // console.log(e.keyCode);
-            drawAll();
             return;
         }
 
@@ -199,7 +204,9 @@ function MapController(mapArgs) {
 mm = new MapController({
     config : CreateMapConfig(),
     mapId : "freemindmap",
-    containerId : "mapContainer"});
+    containerId : "mapContainer",
+    inputTextPlainId : "inputTextPlain"
+});
 
 if (window.addEventListener) { // Mozilla, Netscape, Firefox
     window.addEventListener('load', mm.FreeMindmapLoad, false);
