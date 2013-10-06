@@ -9,12 +9,16 @@ function Editor(mapArgs) {
 		input.style.display = "block";
 		input.focus();
 		input.select();
+		var minWidth = n.measure.width;
 		var keyListener = function(e) {
+			n.data = input.value;
+			var newWidth = callbacks["measure"](n);
 			if(callbacks[e.keyCode]) {
 				input.removeEventListener("keydown", keyListener);
 				input.style.display = "none";
-				n.data = input.value;
 				callbacks[e.keyCode](n);
+			} if(newWidth > minWidth) {
+				input.style.width = newWidth + 10 + "px";
 			}
 		};
 		input.addEventListener("keydown", keyListener, false);

@@ -619,13 +619,10 @@ function Map(config) {
 
     var draw = function(args) {
         var roots = db.getRoots();
-        var ctx = args["ctx"];
-        ctx.beginPath();
         for(var i in roots) {
             args["root"] = roots[i];
             painter.drawTree(args);
         }
-        ctx.closePath();
     };
 
     var toJSON = function() { return JSON.stringify(db); };
@@ -643,6 +640,7 @@ function Map(config) {
         keyLeft : keyLeft,
         keyRight : keyRight,
         keyUp : keyUp,
+        measureWidth : painter.measureWidth,
         moveCanvas : painter.moveCanvas,
         moveCursor : moveCursor,
         orderDown : orderDown,
@@ -658,6 +656,7 @@ function Map(config) {
 
 function Painter(db, users, config) {
     var canvasX = 0, canvasY = 0;
+    var ctx;
 
     var moveCanvas = function(arg) {
         canvasX += arg["x"];
@@ -668,7 +667,7 @@ function Painter(db, users, config) {
         var rootId = arg["root"];
         var node = db.get(rootId);
         if(node.display) {
-            var ctx = arg["ctx"];
+            ctx = arg["ctx"];
             var nid = rootId;
             var width = arg["width"];
             var height = arg["height"];
@@ -676,7 +675,9 @@ function Painter(db, users, config) {
             measureTree(ctx, rootId);
             var posX = width / 2 - canvasX - ctx.measureText(node.data).width / 2;
             var posY = height / 2 - canvasY;
+            ctx.beginPath();
             drawNodeTree(ctx, node, nid, posX, posY);
+            ctx.closePath();
         }
     }
 
@@ -809,22 +810,32 @@ function Painter(db, users, config) {
         return;
     };
 
+    var measureTextPlain = function(n) {
+        return {
+            width : ctx.measureText(n.data).width + config.get("cursorMargin")
+            , height : n.font.size
+        };
+    };
+
+    var measureWidth = function(n) {
+        drawSetup(ctx, n);
+        return measureFuncs[n.mimetype](n).width;
+    };
+
     var measureTree = function(ctx, nid) {
         // prepare
         var node = db.get(nid);
         if(!node.display) {
             return 0;
         }
-        drawSetup(ctx, node);
         marginNodeTop = config.get("marginNodeTop");
         marginNodeLeft = config.get("marginNodeLeft");
 
         // measure setup
-        node.measure.width = ctx.measureText(node.data).width
-             + config.get("cursorMargin");
-        node.measure.height = node.font.size;
+        drawSetup(ctx, node);
+        node.measure = measureFuncs[node.mimetype](node);
 
-        // mesure right child size
+        // measure right child size
         node.rHeight = 0;
         for(var i in node.link.right) {
             if(db.get(node.link.right[i]).display) {
@@ -850,9 +861,18 @@ function Painter(db, users, config) {
         return Math.max(node.rHeight, node.lHeight);
     };
 
+    var measureFuncs = {
+        "text/plain" : measureTextPlain,
+        "text/html" : null,
+        "text/uri-list" : null,
+        "image" : null,
+        "audio" : null,
+    };
+
     var painterAPIs = {
         moveCanvas : moveCanvas,
         drawTree : drawNodeAndChilds,
+        measureWidth : measureWidth,
     };
     return painterAPIs;
 }

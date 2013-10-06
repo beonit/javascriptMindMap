@@ -42,9 +42,11 @@ function MapController(mapArgs) {
             , {13 : function(n) {
                 editMode = EDITMODE.SUBMIT;
                 map.edit({"uname":"owner", "node":n});
-            }, 27: function(n) {
+            }, 27 : function(n) {
                 editMode = EDITMODE.NONE;
-            } });
+            }, "measure" : function(n) {
+                return map.measureWidth(n);
+            }});
         return true;
     };
 
