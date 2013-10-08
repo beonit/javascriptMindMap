@@ -1,0 +1,53 @@
+div.navbar.navbar-default(role="navigation")
+  .navbar-header
+    button.navbar-toggle(type="button", data-toggle="collapse", data-target=".navbar-ex1-collapse")
+      span.sr-only
+      span.icon-bar
+      span.icon-bar
+      span.icon-bar
+    a.navbar-brand(href="#") FreeMind on Web!
+  div.collapse.navbar-collapse.navbar-ex1-collapse
+    ul.nav.navbar-nav
+      li.dropdown
+        a.dropdown-toggle(href="#" data-toggle="dropdown") Map
+          b.caret
+        ul.dropdown-menu
+          li
+            a(href="#") New
+          li
+            a(href="#") Save
+          li
+            a(href="#") Load
+          li
+            a(href="#") Share
+      li.dropdown
+        a.dropdown-toggle(href="#" data-toggle="dropdown") Edit
+          b.caret
+        ul.dropdown-menu
+          li
+            a(href="#") Insert new node
+          li
+            a(href="#") Copy node
+          li
+            a(href="#") Cut node
+          li
+            a(href="#") Paste node
+          li
+            a(href="#") Undo action
+          li
+            a(href="#") Redo Action
+      li
+        a(href="#") Help
+    ul.nav.navbar-nav.navbar-right
+      li
+        a(href="#") Contact us
+      li.dropdown
+        a.dropdown-toggle(href="#" data-toggle="dropdown") Account
+          b.caret
+        ul.dropdown-menu
+          li
+            a(href="#") Login
+          li
+            a(href="#") Logout
+          li
+            a(href="#") Create account
