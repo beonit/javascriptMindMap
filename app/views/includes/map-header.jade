@@ -1,3 +1,4 @@
+// nav bar
 div.navbar.navbar-default(role="navigation")
   .navbar-header
     button.navbar-toggle(type="button", data-toggle="collapse", data-target=".navbar-ex1-collapse")
@@ -46,7 +47,7 @@ div.navbar.navbar-default(role="navigation")
           b.caret
         ul.dropdown-menu
           li
-            a(href="#signinModal" data-toggle="modal") Sign in
+            a#menuSignin(href="#signinModal" data-toggle="modal") Sign in
           li
             a(href="#") Logout
           li
@@ -54,7 +55,7 @@ div.navbar.navbar-default(role="navigation")
           li
             a(href="#") Contact us
 
-
+// signin modal
 div.modal.fade#signinModal(tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true")
   div.modal-dialog
     div.modal-content
@@ -79,7 +80,7 @@ div.modal.fade#signinModal(tabindex="-1" role="dialog" aria-labelledby="myModalL
         button.btn.btn-default(type="button" data-dismiss="modal") Close
         button.btn.btn-primary#btnSignin(type='submit') Sign in
 
-
+// signup modal
 div.modal.fade#signupModal(tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true")
   div.modal-dialog
     div.modal-content
@@ -92,13 +93,13 @@ div.modal.fade#signupModal(tabindex="-1" role="dialog" aria-labelledby="myModalL
           input(type='hidden', name='_csrf', value="#{csrf_token}")
 
           .input-group.input-group
+            span.input-group-addon @
+            input.form-control.input#signupEmail(name="email" placeholder="E-mail address <me@example.com>")
+          br
+          .input-group.input-group
             span.input-group-addon
               span.glyphicon.glyphicon-user
             input.form-control.input#signupName(name="name" placeholder="User name")
-          br
-          .input-group.input-group
-            span.input-group-addon @
-            input.form-control.input#signupEmail(name="email" placeholder="E-mail address <me@example.com>")
           br
           .input-group.input-group
             span.input-group-addon
@@ -114,3 +115,15 @@ div.modal.fade#signupModal(tabindex="-1" role="dialog" aria-labelledby="myModalL
         button.btn.btn-default(type="button" data-dismiss="modal") Close
         button.btn.btn-primary#btnSignup(type="button") Create account
 
+
+// welcome modal
+div.modal.fade#welcomeModal(tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true")
+  div.modal-dialog
+    div.modal-content
+      div.modal-header
+        button.close(type="button" data-dismiss="modal" aria-hidden="true") &times;
+        h3.modal-title Welcome to #{pkg.name}
+      div.modal-body
+        h4 after login you can use full features.
+      div.modal-footer
+        button.btn.btn-primary(type="button" data-dismiss="modal") Close and login

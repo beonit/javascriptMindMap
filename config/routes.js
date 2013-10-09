@@ -23,5 +23,6 @@ module.exports = function (app, passport) {
   app.get('/', home.index)
   app.get('/map/', map.index)
   app.post('/users/', users.create)
+  app.post('/users/session', passport.authenticate('local'), users.session)
 
 }

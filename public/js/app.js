@@ -9,20 +9,22 @@ var appOnload = function() {
     var validate = function(id, errMessage, validator) {
         var element = $(id);
         if(validator(element[0].value)) {
-            element.popover("hide");
+            element.popover("destroy");
             return true;
         } else {
-            var _popover;
-            _popover = element.popover({
-                trigger: "manual",
-                placement: "bottom",
-                content: errMessage,
-                template: "<div class=\"popover\"><div class=\"arrow\"></div><div class=\"popover-inner\"><div class=\"popover-content\"><p></p></div></div></div>"
-            });
-            _popover.data("bs.popover").options.content = errMessage;
-            element.popover("show");
+            showPopover(element, errMessage);
             return false;
         }
+    }
+
+    var showPopover = function(element, errMessage) {
+        var _popover;
+        _popover = element.popover({
+            trigger: 'manual',
+            placement: 'auto',
+            content: errMessage,
+        });
+        element.popover("show");
     }
 
     var validateEmail = function(email) {
@@ -38,39 +40,72 @@ var appOnload = function() {
         return str.length > 0;
     }
 
-    var errorMessage = function(str) {
-        $(".alert").alert();
-    };
+    var errorHandler = function(errors) {
+        for(var i in errors) {
+            if(errors[i] === "Email already exists") {
+                showPopover($("#signupEmail"), errors[i]);
+            } else {
+                alerts(errors[i]);
+            }
+        }
+    }
 
-    var successMessage = function(str) {
-        $(".alert").alert();
-    };
+    var loginFail = function(httpObj, textStatus) {
+        if(httpObj.status == 401) {
+            var _popover = $("#signinEmail").popover({
+                trigger: 'manual',
+                placement: 'top',
+                title: "Login fail",
+                content: "Confirm your email or password",
+            });
+            $("#signinEmail").popover("show");
+            console.log(httpObj);
+            console.log(textStatus);
+        } else {
+            alerts("error : " + httpObj.status);
+        }
+    }
 
     $("#btnSignin").click(function(e) {
-        $("#signinEmail")[0].value = trim1($("#signupEmail")[0].value);
+        $("#signinEmail")[0].value = trim1($("#signinEmail")[0].value);
         if(!validate("#signinEmail", "Email must be filled out"
                 , validateEmpty) ||
             !validate("#signinPassword", "Password must be filled out"
-                , validateEmpty)) {
+                , validateEmpty) ||
+            !validate("#signinEmail", "Not a valid e-mail address"
+                , validateEmail)) {
             return;
         }
 
         // send message
         $.ajax( {
-            url: '/users',
+            url: '/users/session',
             data: $("#formSignin").serialize(),
             type: 'POST',
             success: function(resp) {
                 if(resp.status) {
-                    successMessage("id creation success");
+                    console.log("login success as " + resp.user);
+                    $("#signinModal").modal('hide');
                 } else {
-                    for(var i in resp.errors) {
-                        errorMessage(resp.errors[i]);
-                    }
+                    errorHandler(resp.errors);
                 }
-            }
+            },
+            error: function(httpObj, textStatus) {
+                var popoverObj = {
+                    trigger: 'manual',
+                    placement: 'top',
+                    title: "Login fail",
+                    content: "Confirm your email or password",
+                };
+                if(httpObj.status == 401) {
+                    popoverObj.content = "Confirm your email or password";
+                } else {
+                    popoverObj.content = "Error : " + httpObj.status;
+                }
+                var _popover = $("#signinEmail").popover(popoverObj);
+                $("#signinEmail").popover("show");
+            },
         });
-        $("#signinModal").modal('hide');
     });
 
     $("#btnSignup").click(function(e) {
@@ -86,10 +121,12 @@ var appOnload = function() {
                 , validateEmpty) ||
             !validate("#signupConfirm", "Password confirm must be filled out"
                 , validateEmpty) ||
-            !validate("#signupEmail", "Not a valid e-mail address"
-                , validateEmail) ||
             !validate("#signupPassword", "Password must be same"
-                , validateConfirm)) {
+                , validateConfirm) ||
+            !validate("#signupEmail", "Not a valid e-mail address"
+                , validateEmail)
+            ) {
+            console.log("validate fail");
             return;
         }
 
@@ -100,14 +137,13 @@ var appOnload = function() {
             type: 'POST',
             success: function(resp) {
                 if(resp.status) {
-                    successMessage("id creation success");
                     $("#signupModal").modal('hide');
+                    $('#welcomeModal').on('hide.bs.modal', function () {
+                        $("#signinModal").modal('show');
+                    });
+                    $("#welcomeModal").modal('show');
                 } else {
-                    var msg = "";
-                    for(var i in resp.errors) {
-                        msg += resp.errors[i];
-                    }
-                    errorMessage(msg);
+                    errorHandler(resp.errors);
                 }
             }
         });

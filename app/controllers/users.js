@@ -22,3 +22,9 @@ exports.create = function (req, res) {
         }
     });
 };
+
+exports.session = function(req, res) {
+    res.writeHead(200, {"Content-Type": "application/json"});
+    res.write(JSON.stringify({"status":true, "user":req.user.name}));
+    res.end();
+}
