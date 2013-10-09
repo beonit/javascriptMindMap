@@ -609,7 +609,7 @@ function Map(config) {
     var cut = function() {
         var nid = users.get("owner");
         db.copyToClipboard(nid);
-        _hide({"uname":"owner"});
+        hide({"uname":"owner"});
     };
 
     var paste = function() {
