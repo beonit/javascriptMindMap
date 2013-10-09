@@ -26,7 +26,8 @@
     "view-helpers": "latest",
     "jade": "latest",
     "async": "latest",
-    "forever": "latest"
+    "forever": "latest",
+    "underscore": "latest"
   },
   "devDependencies": {
     "nodemon": "latest",

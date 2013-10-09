@@ -36,18 +36,81 @@ div.navbar.navbar-default(role="navigation")
             a(href="#") Undo action
           li
             a(href="#") Redo Action
-      li
-        a(href="#") Help
     ul.nav.navbar-nav.navbar-right
       li
-        a(href="#") Contact us
+        a(href="#")
+          span.glyphicon.glyphicon-question-sign
       li.dropdown
-        a.dropdown-toggle(href="#" data-toggle="dropdown") Account
+        a.dropdown-toggle(href="#" data-toggle="dropdown")
+          span.glyphicon.glyphicon-user
           b.caret
         ul.dropdown-menu
           li
-            a(href="#") Login
+            a(href="#signinModal" data-toggle="modal") Sign in
           li
             a(href="#") Logout
           li
-            a(href="#") Create account
+            a#menuSignup(href="#signupModal" data-toggle="modal") Create account
+          li
+            a(href="#") Contact us
+
+
+div.modal.fade#signinModal(tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true")
+  div.modal-dialog
+    div.modal-content
+      div.modal-header
+        button.close(type="button" data-dismiss="modal" aria-hidden="true") &times;
+        h4.modal-title Sign in
+
+      div.modal-body
+        form.form-horizontal#formSignin(action="/users", method="POST")
+          input(type='hidden', name='_csrf', value="#{csrf_token}")
+
+          .input-group.input-group
+            span.input-group-addon @
+            input.form-control.input#signinEmail(name="email" placeholder="E-mail address <me@example.com>")
+          br
+          .input-group.input-group
+            span.input-group-addon
+              span.glyphicon.glyphicon-lock
+            input.form-control.input#signinPassword(name="password" placeholder="Your password" type="password")
+
+      div.modal-footer
+        button.btn.btn-default(type="button" data-dismiss="modal") Close
+        button.btn.btn-primary#btnSignin(type='submit') Sign in
+
+
+div.modal.fade#signupModal(tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true")
+  div.modal-dialog
+    div.modal-content
+      div.modal-header
+        button.close(type="button" data-dismiss="modal" aria-hidden="true") &times;
+        h4.modal-title Sign up
+
+      div.modal-body
+        form.form-horizontal#formSignup(action="/users", method="POST")
+          input(type='hidden', name='_csrf', value="#{csrf_token}")
+
+          .input-group.input-group
+            span.input-group-addon
+              span.glyphicon.glyphicon-user
+            input.form-control.input#signupName(name="name" placeholder="User name")
+          br
+          .input-group.input-group
+            span.input-group-addon @
+            input.form-control.input#signupEmail(name="email" placeholder="E-mail address <me@example.com>")
+          br
+          .input-group.input-group
+            span.input-group-addon
+              span.glyphicon.glyphicon-lock
+            input.form-control.input#signupPassword(name="password" placeholder="Your password" type="password")
+          br
+          .input-group.input-group
+            span.input-group-addon
+              span.glyphicon.glyphicon-ok
+            input.form-control.input#signupConfirm(name="passwordconfirm" placeholder="Confrim password" type="password")
+
+      div.modal-footer
+        button.btn.btn-default(type="button" data-dismiss="modal") Close
+        button.btn.btn-primary#btnSignup(type="button") Create account
+
