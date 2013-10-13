@@ -57,6 +57,14 @@ var TestSuite = function() {
         $("#btnSignin").trigger("click");
     }
 
+    var saveMapTest = function() {
+        $("#btnMenuSave").trigger("click");
+    }
+
+    var loadMapTest = function() {
+        $("#btnMenuLoad").trigger("click");
+    }
+
     return {
         userCreate : userCreate,
         validateSignup : validateSignup,
@@ -64,6 +72,8 @@ var TestSuite = function() {
         userSignin : userSignin,
         unknownUserSignin : unknownUserSignin,
         wrongPasswordSignin : wrongPasswordSignin,
+        saveMapTest : saveMapTest,
+        loadMapTest : loadMapTest,
     }
 }
 
@@ -77,6 +87,10 @@ var testTrigger = function() {
     // tests.userSignin();
     // tests.unknownUserSignin();
     // tests.wrongPasswordSignin();
+
+    // test save load
+    // tests.saveMapTest();
+    // tests.loadMapTest();
 }
 
 if (window.addEventListener) { // Mozilla, Netscape, Firefox

@@ -4,9 +4,11 @@
  */
 
 var mongoose = require('mongoose')
+var auth = require('./middlewares/authorization')
+
 var passportOptions = {
-  failureFlash: 'Invalid email or password.',
-  failureRedirect: '/login'
+    failureFlash: 'Invalid email or password.',
+    failureRedirect: '/login'
 }
 
 // controllers
@@ -20,9 +22,11 @@ var users = require('users')
 
 module.exports = function (app, passport) {
 
-  app.get('/', home.index)
-  app.get('/map/', map.index)
-  app.post('/users/', users.create)
-  app.post('/users/session', passport.authenticate('local'), users.session)
+    app.get('/', home.index)
+    app.post('/users/', users.create)
+    app.post('/users/session', passport.authenticate('local'), users.session)
+    app.get('/map/', map.index)
+    app.get('/map/list/', auth.requiresLogin, map.list)
+    app.post('/map/', auth.requiresLogin, map.save)
 
 }

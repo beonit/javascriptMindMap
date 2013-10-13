@@ -44,8 +44,11 @@ var appOnload = function() {
         for(var i in errors) {
             if(errors[i] === "Email already exists") {
                 showPopover($("#signupEmail"), errors[i]);
+            } else if(errors[i] === "Auth fail") {
+                $("#signinModal").modal('show');
+                showPopover($("#signinEmail"), errors[i]);
             } else {
-                alerts(errors[i]);
+                console.log("error message : " + errors[i]);
             }
         }
     }
@@ -78,7 +81,7 @@ var appOnload = function() {
         }
 
         // send message
-        $.ajax( {
+        $.ajax({
             url: '/users/session',
             data: $("#formSignin").serialize(),
             type: 'POST',
@@ -131,7 +134,7 @@ var appOnload = function() {
         }
 
         // send message
-        $.ajax( {
+        $.ajax({
             url: '/users',
             data: $("#formSignup").serialize(),
             type: 'POST',
@@ -145,6 +148,26 @@ var appOnload = function() {
                 } else {
                     errorHandler(resp.errors);
                 }
+            }
+        });
+    });
+
+    $("#btnMenuSave").click(function(e) {
+        $("#formSaveValue")[0].value = "/* Todo get mapdata */";
+        $("#formSaveTitle")[0].value = "Map title";
+        $.ajax({
+            url: '/map/',
+            data: $("#formSave").serialize(),
+            type: 'POST',
+            success: function(resp) {
+                if(resp.status) {
+                    /* Save map succes feedback */
+                } else {
+                    errorHandler(resp.errors);
+                }
+            },
+            error: function(httpObj, textStatus) {
+                console.log("ajax call fail");
             }
         });
     });

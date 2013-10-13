@@ -7,24 +7,18 @@ var mongoose = require('mongoose')
   , utils = require('../../lib/utils')
 
 exports.create = function (req, res) {
-    res.writeHead(200, {"Content-Type": "application/json"});
     var user = new User(req.body);
     user.provider = 'local';
     user.save(function (err) {
         if (err) {
-            res.write(JSON.stringify(
-                {"status":false, "errors" : utils.errors(err.errors)}));
-            res.end();
-            return;
+            utils.jsonPage(res,
+                {"status":false, "errors" : utils.errors(err.errors)});
         } else {
-            res.write(JSON.stringify({"status":true}));
-            res.end();
+            utils.jsonPage(res, {"status":true});
         }
     });
 };
 
 exports.session = function(req, res) {
-    res.writeHead(200, {"Content-Type": "application/json"});
-    res.write(JSON.stringify({"status":true, "user":req.user.name}));
-    res.end();
+    utils.jsonPage(res, {"status":true, "user":req.user.name});
 }

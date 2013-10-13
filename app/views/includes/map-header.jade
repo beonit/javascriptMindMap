@@ -16,9 +16,9 @@ div.navbar.navbar-default(role="navigation")
           li
             a(href="#") New
           li
-            a(href="#") Save
+            a#btnMenuSave(href="#") Save
           li
-            a(href="#") Load
+            a#btnMenuLoad(href="#") Load
           li
             a(href="#") Share
       li.dropdown
@@ -127,3 +127,11 @@ div.modal.fade#welcomeModal(tabindex="-1" role="dialog" aria-labelledby="myModal
         h4 after login you can use full features.
       div.modal-footer
         button.btn.btn-primary(type="button" data-dismiss="modal") Close and login
+
+
+// save form
+div.hide
+  form.form-horizontal#formSave(action="/map", method="POST")
+    input(type='hidden', name='_csrf', value="#{csrf_token}")
+    input#formSaveValue(type='hidden', name='map')
+    input#formSaveTitle(type='hidden', name='title')
