@@ -62,6 +62,9 @@ var TestSuite = function() {
     }
 
     var loadMapTest = function() {
+    }
+
+    var loadListTest = function() {
         $("#btnMenuLoad").trigger("click");
     }
 
@@ -74,6 +77,7 @@ var TestSuite = function() {
         wrongPasswordSignin : wrongPasswordSignin,
         saveMapTest : saveMapTest,
         loadMapTest : loadMapTest,
+        loadListTest : loadListTest,
     }
 }
 
@@ -90,7 +94,7 @@ var testTrigger = function() {
 
     // test save load
     // tests.saveMapTest();
-    // tests.loadMapTest();
+    tests.loadListTest();
 }
 
 if (window.addEventListener) { // Mozilla, Netscape, Firefox

@@ -129,6 +129,39 @@ div.modal.fade#welcomeModal(tabindex="-1" role="dialog" aria-labelledby="myModal
         button.btn.btn-primary(type="button" data-dismiss="modal") Close and login
 
 
+// delete confirm modal
+div.modal.fade#deleteConfirmModal(tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true")
+  div.modal-dialog
+    div.modal-content
+      div.modal-header
+        button.close(type="button" data-dismiss="modal" aria-hidden="true") &times;
+        h3.modal-title Do you want to remove this file?
+      div.modal-body
+        h4#deleteInfomBody
+      div.modal-footer
+        button.btn(type="button" data-dismiss="modal") Cancel
+        button.btn.btn-danger#deleteConfirmBtn(type="button") Remove
+
+
+// load modal
+div.modal.fade#mapLoadModal(tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true")
+  div.modal-dialog
+    div.modal-content
+      div.modal-header
+        button.close(type="button" data-dismiss="modal" aria-hidden="true") &times;
+        h3.modal-title Your files...
+      div.modal-body
+        table.table.table-hover
+          thead
+            tr("align" = "center")
+              td
+              td("width"="50%")
+                b Title
+              td
+                b Create time
+          tbody#loadTable
+
+
 // save form
 div.hide
   form.form-horizontal#formSave(action="/map", method="POST")

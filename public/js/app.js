@@ -69,6 +69,25 @@ var appOnload = function() {
         }
     }
 
+    var loadMap = function(id) {
+        console.log(id);
+    }
+
+    var deleteMap = function(id) {
+        console.log(id);
+    }
+
+    var deleteConfirmModal = function(id, title) {
+        $("#mapLoadModal").modal("hide");
+        $("#deleteInfomBody")[0].innerHTML = title;
+        $("#deleteConfirmBtn").unbind("click");
+        $("#deleteConfirmBtn").on('click', function (e) {
+            $("#deleteConfirmModal").modal("hide");
+            deleteMap(id);
+        })
+        $("#deleteConfirmModal").modal("show");
+    }
+
     $("#btnSignin").click(function(e) {
         $("#signinEmail")[0].value = trim1($("#signinEmail")[0].value);
         if(!validate("#signinEmail", "Email must be filled out"
@@ -168,6 +187,46 @@ var appOnload = function() {
             },
             error: function(httpObj, textStatus) {
                 console.log("ajax call fail");
+            }
+        });
+    });
+
+    $("#btnMenuLoad").click(function(e) {
+        $.ajax({
+            url: '/map/list/',
+            type: 'GET',
+            success: function(resp) {
+                $("#mapLoadModal").modal('show');
+
+                $("#loadTable")[0].innerHTML = "";
+                var addTd = function(newTr, item) {
+                    var newTd = document.createElement('td');
+                    newTd.innerHTML = item;
+                    newTr.appendChild(newTd);
+                    return newTd;
+                }
+
+                for(var i in resp.maps) {
+                    var newTr = document.createElement('tr');
+                    newTr.addEventListener('click', function(e) {
+                        loadMap(resp.maps[i].id);
+                    }, false);
+
+                    addTd(newTr, parseInt(i) + 1);
+                    addTd(newTr, resp.maps[i].title);
+                    addTd(newTr, resp.maps[i].createdAt);
+                    var deleteTd = addTd(newTr, "<span class='glyphicon glyphicon-remove'></span>");
+                    deleteTd.addEventListener('click', function(e) {
+                        deleteConfirmModal(resp.maps[i].id, resp.maps[i].title);
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }, false);
+
+                    $("#loadTable")[0].appendChild(newTr);
+                }
+            },
+            error: function(httpObj, textStatus) {
+                console.log("list ajax call fail");
             }
         });
     });

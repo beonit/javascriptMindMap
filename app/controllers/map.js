@@ -36,7 +36,8 @@ exports.list = function(req, res){
             for(var i in maps) {
                 rtnData.maps.push({
                     "title":maps[i].title,
-                    "createdAt":maps[i].createdAt
+                    "createdAt":maps[i].createdAt,
+                    "id":maps[i]._id,
                 });
             }
             utils.jsonPage(res, rtnData);
@@ -45,14 +46,50 @@ exports.list = function(req, res){
 }
 
 /**
- * List
+ * Create a map
  */
 
-exports.save = function (req, res) {
+exports.create = function (req, res) {
     var map = new Map(req.body)
     map.user = req.user
-    map.save()
+    map.save();
+    utils.jsonPage(res, {"status":true});
+}
 
-    console.log("save func : " + req.user.name);
-    utils.jsonPage({"status":true, "user":req.user.name});
+/**
+ * Update map
+ */
+
+exports.update = function(req, res){
+    utils.jsonPage(res, {"status":true});
+}
+
+/**
+ * Show
+ */
+
+exports.show = function(req, res){
+    utils.jsonPage(res, {"status":true, "data":req.map});
+}
+
+/**
+ * Delete an map
+ */
+
+exports.destroy = function(req, res){
+    utils.jsonPage(res, {"status":true});
+}
+
+/**
+ * Load
+ */
+
+exports.load = function(req, res, next, id){
+    var User = mongoose.model('User')
+    Map.load(id, function (err, map) {
+        if (err) return next(err)
+        if (!map) return next(new Error('not found'))
+        req.map = map
+        next()
+    })
 }

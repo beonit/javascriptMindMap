@@ -39,7 +39,7 @@ MapSchema.methods = {
 MapSchema.statics = {
 
     /**
-     * Find article by id
+     * Find map by id
      *
      * @param {ObjectId} id
      * @param {Function} cb
@@ -54,7 +54,7 @@ MapSchema.statics = {
     },
 
     /**
-     * List articles
+     * List maps
      *
      * @param {Object} options
      * @param {Function} cb
