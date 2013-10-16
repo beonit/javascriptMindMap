@@ -625,6 +625,15 @@ function Map(config) {
         }
     };
 
+    var title = function() {
+        var roots = db.getRoots();
+        for(var i in roots) {
+            if(db.get(roots[i]).display) {
+                return db.get(roots[i]).data;
+            }
+        }
+    };
+
     var toJSON = function() { return JSON.stringify(db); };
 
     var mapAPIs = {
@@ -649,6 +658,7 @@ function Map(config) {
         redo : redo,
         remove : hide,
         undo : undo,
+        title : title,
         toJSON : toJSON,
     };
     return mapAPIs;

@@ -201,6 +201,10 @@ function MapController(mapArgs) {
             }
         }
     }
+
+    this.title = function() {
+        return map.title();
+    }
 }
 
 mm = new MapController({

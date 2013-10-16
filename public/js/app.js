@@ -71,10 +71,11 @@ var appOnload = function() {
 
     var loadMap = function(id) {
         $.ajax({
-            url: '/map/' + id,
+            url: '/map/' + id + ".json",
             type: 'GET',
             success: function(resp) {
                 if(resp.status) {
+                    window.history.pushState(null, null, '/map/' + id);
                 } else {
                     errorHandler(resp.errors);
                 }
@@ -199,11 +200,11 @@ var appOnload = function() {
 
     $("#btnMenuSave").click(function(e) {
         $("#formSaveValue")[0].value = "/* Todo get mapdata */";
-        $("#formSaveTitle")[0].value = "Map title";
+        $("#formSaveTitle")[0].value = mm.title();
         $.ajax({
-            url: '/map/',
+            url: window.location.href.toString().split(window.location.host)[1],
             data: $("#formSave").serialize(),
-            type: 'POST',
+            type: 'PUT',
             success: function(resp) {
                 if(resp.status) {
                     /* Save map succes feedback */

@@ -164,7 +164,7 @@ div.modal.fade#mapLoadModal(tabindex="-1" role="dialog" aria-labelledby="myModal
 
 // save form
 div.hide
-  form.form-horizontal#formSave(action="/map", method="POST")
+  form.form-horizontal#formSave(action="/map", method="PUT")
     input(type='hidden', name='_csrf', value="#{csrf_token}")
     input#formSaveValue(type='hidden', name='map')
     input#formSaveTitle(type='hidden', name='title')

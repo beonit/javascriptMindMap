@@ -2,6 +2,7 @@ var mongoose = require('mongoose')
     , User = mongoose.model('User')
     , Map = mongoose.model('Map')
     , utils = require('../../lib/utils')
+    , _ = require('underscore')
 
 /*!
  * Module dependencies.
@@ -60,6 +61,9 @@ exports.create = function (req, res) {
  */
 
 exports.update = function(req, res){
+    var map = req.map;
+    map = _.extend(map, req.body)
+    map.save();
     utils.jsonPage(res, {"status" : true});
 }
 
@@ -67,7 +71,7 @@ exports.update = function(req, res){
  * Show
  */
 
-exports.show = function(req, res){
+exports.show = function(req, res) {
     utils.jsonPage(res, {"status" : true, "data":req.map});
 }
 
@@ -75,7 +79,7 @@ exports.show = function(req, res){
  * Delete an map
  */
 
-exports.destroy = function(req, res){
+exports.destroy = function(req, res) {
     var map = req.map
     map.remove(function(err){
         utils.jsonPage(res, {"status" : true});
