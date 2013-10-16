@@ -70,11 +70,37 @@ var appOnload = function() {
     }
 
     var loadMap = function(id) {
-        console.log(id);
+        $.ajax({
+            url: '/map/' + id,
+            type: 'GET',
+            success: function(resp) {
+                if(resp.status) {
+                } else {
+                    errorHandler(resp.errors);
+                }
+                $("#mapLoadModal").modal("hide");
+            },
+            error: function(httpObj, textStatus) {
+                console.log("map load fail");
+            }
+        });
     }
 
     var deleteMap = function(id) {
-        console.log(id);
+        $.ajax({
+            url: '/map/' + id,
+            data: $("#formSave").serialize(),
+            type: 'DELETE',
+            success: function(resp) {
+                if(resp.status) {
+                } else {
+                    errorHandler(resp.errors);
+                }
+            },
+            error: function(httpObj, textStatus) {
+                console.log("map destroy fail");
+            }
+        });
     }
 
     var deleteConfirmModal = function(id, title) {
@@ -208,19 +234,31 @@ var appOnload = function() {
 
                 for(var i in resp.maps) {
                     var newTr = document.createElement('tr');
-                    newTr.addEventListener('click', function(e) {
-                        loadMap(resp.maps[i].id);
-                    }, false);
 
                     addTd(newTr, parseInt(i) + 1);
                     addTd(newTr, resp.maps[i].title);
                     addTd(newTr, resp.maps[i].createdAt);
+
                     var deleteTd = addTd(newTr, "<span class='glyphicon glyphicon-remove'></span>");
-                    deleteTd.addEventListener('click', function(e) {
-                        deleteConfirmModal(resp.maps[i].id, resp.maps[i].title);
-                        e.preventDefault();
-                        e.stopPropagation();
+                    deleteTd.addEventListener('click', (function() {
+                        var mapId = resp.maps[i].id;
+                        var title = resp.maps[i].title;
+                        return function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            deleteConfirmModal(mapId, title);
+                        }
+                    })(), false);
+
+                    newTr.addEventListener('click', function(e) {
                     }, false);
+
+                    newTr.addEventListener('click', (function() {
+                        var mapId = resp.maps[i].id;
+                        return function(e) {
+                            loadMap(mapId);
+                        }
+                    })(), false);
 
                     $("#loadTable")[0].appendChild(newTr);
                 }

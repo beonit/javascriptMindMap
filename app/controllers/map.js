@@ -3,7 +3,6 @@ var mongoose = require('mongoose')
     , Map = mongoose.model('Map')
     , utils = require('../../lib/utils')
 
-
 /*!
  * Module dependencies.
  */
@@ -28,11 +27,11 @@ exports.list = function(req, res){
 
     Map.list(options, function(err, maps) {
         if (err) {
-            utils.jsonPage(res, {"status":false, "msg":"map listing fail"});
+            utils.jsonPage(res, {"status" : false, "msg" : "map listing fail"});
         }
 
         Map.count().exec(function (err, count) {
-            var rtnData = {"status":true, "maps":[]};
+            var rtnData = {"status" : true, "maps" : []};
             for(var i in maps) {
                 rtnData.maps.push({
                     "title":maps[i].title,
@@ -53,7 +52,7 @@ exports.create = function (req, res) {
     var map = new Map(req.body)
     map.user = req.user
     map.save();
-    utils.jsonPage(res, {"status":true});
+    utils.jsonPage(res, {"status" : true});
 }
 
 /**
@@ -61,7 +60,7 @@ exports.create = function (req, res) {
  */
 
 exports.update = function(req, res){
-    utils.jsonPage(res, {"status":true});
+    utils.jsonPage(res, {"status" : true});
 }
 
 /**
@@ -69,7 +68,7 @@ exports.update = function(req, res){
  */
 
 exports.show = function(req, res){
-    utils.jsonPage(res, {"status":true, "data":req.map});
+    utils.jsonPage(res, {"status" : true, "data":req.map});
 }
 
 /**
@@ -77,7 +76,10 @@ exports.show = function(req, res){
  */
 
 exports.destroy = function(req, res){
-    utils.jsonPage(res, {"status":true});
+    var map = req.map
+    map.remove(function(err){
+        utils.jsonPage(res, {"status" : true});
+    })
 }
 
 /**
