@@ -66,7 +66,6 @@ function Users(rootid) {
         },
         update : function(uname, nid) { users[uname] = nid; },
         remove : function(uname) { users.pop(uname); },
-        toJSON : function() { return JSON.stringify(users); }
     }
 }
 
@@ -315,6 +314,15 @@ function NodeDB() {
         return nodeDB.length - 1;
     };
 
+    var importData = function(data) {
+        nodeDB = data.nodeDB;
+        roots = data.roots;
+    };
+
+    var exportData = function() {
+        return { nodeDB : nodeDB, roots : roots };
+    };
+
     // DB APIs
     var DBAPIs = {
         addAfterSibling : addAfterSibling,
@@ -345,7 +353,8 @@ function NodeDB() {
             display false
              */
         },
-        toJSON : function() { return JSON.stringify(nodeDB); }
+        importData : importData,
+        exportData : exportData,
     };
     return DBAPIs;
 }
@@ -634,7 +643,16 @@ function Map(config) {
         }
     };
 
-    var toJSON = function() { return JSON.stringify(db); };
+    var fromJSON = function(dataStr) {
+        var data = JSON.parse(dataStr);
+        db.importData(data.db);
+        users.update("owner", data.users);
+    }
+
+    var toJSON = function() {
+        var data = { db : db.exportData(), users : users.get("owner") };
+        return JSON.stringify(data);
+    };
 
     var mapAPIs = {
         addAfterSibling : addAfterSibling,
@@ -660,6 +678,7 @@ function Map(config) {
         undo : undo,
         title : title,
         toJSON : toJSON,
+        fromJSON : fromJSON,
     };
     return mapAPIs;
 }

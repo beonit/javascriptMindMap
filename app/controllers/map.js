@@ -8,7 +8,23 @@ var mongoose = require('mongoose')
  * Module dependencies.
  */
 
+/**
+ * Show title
+ */
+
 exports.index = function (req, res) {
+    res.render('map/default', {
+        title: 'Draw up your mind',
+        signup: 'Sign up',
+        login: 'Login',
+    })
+}
+
+/**
+ * Draw map
+ */
+
+exports.show = function (req, res) {
     res.render('map/map', {
         title: 'Draw up your mind'
     })
@@ -71,7 +87,7 @@ exports.update = function(req, res){
  * Show
  */
 
-exports.show = function(req, res) {
+exports.json = function(req, res) {
     utils.jsonPage(res, {"status" : true, "data":req.map});
 }
 

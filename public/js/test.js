@@ -94,7 +94,7 @@ var testTrigger = function() {
 
     // test save load
     // tests.saveMapTest();
-    tests.loadListTest();
+    // tests.loadListTest();
 }
 
 if (window.addEventListener) { // Mozilla, Netscape, Firefox

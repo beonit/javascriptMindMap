@@ -76,6 +76,7 @@ var appOnload = function() {
             success: function(resp) {
                 if(resp.status) {
                     window.history.pushState(null, null, '/map/' + id);
+                    mm.load(resp.data.map);
                 } else {
                     errorHandler(resp.errors);
                 }
@@ -199,7 +200,7 @@ var appOnload = function() {
     });
 
     $("#btnMenuSave").click(function(e) {
-        $("#formSaveValue")[0].value = "/* Todo get mapdata */";
+        $("#formSaveValue")[0].value = mm.save();
         $("#formSaveTitle")[0].value = mm.title();
         $.ajax({
             url: window.location.href.toString().split(window.location.host)[1],

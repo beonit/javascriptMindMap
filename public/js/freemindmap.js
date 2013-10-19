@@ -205,6 +205,14 @@ function MapController(mapArgs) {
     this.title = function() {
         return map.title();
     }
+
+    this.save = function() {
+        return map.toJSON();
+    }
+
+    this.load = function(dataStr) {
+        return map.fromJSON(dataStr);
+    }
 }
 
 mm = new MapController({
