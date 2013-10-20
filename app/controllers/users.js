@@ -22,3 +22,8 @@ exports.create = function (req, res) {
 exports.session = function(req, res) {
     utils.jsonPage(res, {"status":true, "user":req.user.name});
 }
+
+exports.logout = function(req, res) {
+    req.logout();
+    res.redirect('/map/')
+}

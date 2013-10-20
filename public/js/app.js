@@ -53,22 +53,6 @@ var appOnload = function() {
         }
     }
 
-    var loginFail = function(httpObj, textStatus) {
-        if(httpObj.status == 401) {
-            var _popover = $("#signinEmail").popover({
-                trigger: 'manual',
-                placement: 'top',
-                title: "Login fail",
-                content: "Confirm your email or password",
-            });
-            $("#signinEmail").popover("show");
-            console.log(httpObj);
-            console.log(textStatus);
-        } else {
-            alerts("error : " + httpObj.status);
-        }
-    }
-
     var loadMap = function(id) {
         $.ajax({
             url: '/map/' + id + ".json",
@@ -136,6 +120,8 @@ var appOnload = function() {
                 if(resp.status) {
                     console.log("login success as " + resp.user);
                     $("#signinModal").modal('hide');
+                    $("#menuItemGuest").addClass("hide");
+                    $("#menuItemMember").removeClass("hide")
                 } else {
                     errorHandler(resp.errors);
                 }

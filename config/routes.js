@@ -33,6 +33,7 @@ module.exports = function (app, passport) {
     app.get('/', home.index)
     app.post('/users/', users.create)
     app.post('/users/session', passport.authenticate('local'), users.session)
+    app.get('/users/logout', users.logout)
 
     app.get('/map/', map.show)
     app.get('/map/list/', auth.requiresLogin, map.list)

@@ -26,7 +26,8 @@ exports.index = function (req, res) {
 
 exports.show = function (req, res) {
     res.render('map/map', {
-        title: 'Draw up your mind'
+        title : 'Draw up your mind',
+        session : utils.sessionState(req),
     })
 }
 
