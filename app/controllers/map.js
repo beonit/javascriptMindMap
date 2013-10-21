@@ -21,7 +21,18 @@ exports.index = function (req, res) {
 }
 
 /**
- * Draw map
+ * Draw empty map
+ */
+
+exports.empty = function (req, res) {
+    res.render('map/map', {
+        title : 'Draw up your mind',
+        session : utils.sessionState(req),
+    })
+}
+
+/**
+ * Draw some map
  */
 
 exports.show = function (req, res) {
@@ -67,10 +78,11 @@ exports.list = function(req, res){
  */
 
 exports.create = function (req, res) {
-    var map = new Map(req.body)
-    map.user = req.user
+    var map = new Map(req.body);
+    map = _.extend(map, req.body);
+    map.user = req.user;
     map.save();
-    utils.jsonPage(res, {"status" : true});
+    utils.jsonPage(res, {"status" : true, "id" : map._id});
 }
 
 /**
@@ -79,9 +91,9 @@ exports.create = function (req, res) {
 
 exports.update = function(req, res){
     var map = req.map;
-    map = _.extend(map, req.body)
+    map = _.extend(map, req.body);
     map.save();
-    utils.jsonPage(res, {"status" : true});
+    utils.jsonPage(res, {"status" : true, "id" : map.id});
 }
 
 /**
@@ -89,7 +101,7 @@ exports.update = function(req, res){
  */
 
 exports.json = function(req, res) {
-    utils.jsonPage(res, {"status" : true, "data":req.map});
+    utils.jsonPage(res, {"status" : true, "data" : req.map});
 }
 
 /**

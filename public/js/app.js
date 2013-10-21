@@ -194,7 +194,7 @@ var appOnload = function() {
             type: 'PUT',
             success: function(resp) {
                 if(resp.status) {
-                    /* Save map succes feedback */
+                    window.history.pushState(null, null, '/map/' + resp.id);
                 } else {
                     errorHandler(resp.errors);
                 }
@@ -256,6 +256,16 @@ var appOnload = function() {
             }
         });
     });
+
+    // init and load map by request id
+    (function() {
+        var url = window.location.href.toString().split(window.location.host)[1];
+        var regexp = /\/map\/(.+[^\/])?/g
+        var ret = regexp.exec(url);
+        if(ret.length > 1) {
+            loadMap(ret[1]);
+        }
+    })();
 };
 
 if (window.addEventListener) { // Mozilla, Netscape, Firefox

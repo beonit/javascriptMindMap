@@ -35,14 +35,14 @@ module.exports = function (app, passport) {
     app.post('/users/session', passport.authenticate('local'), users.session)
     app.get('/users/logout', users.logout)
 
-    app.get('/map/', map.show)
+    app.get('/map/', map.empty)
     app.get('/map/list/', auth.requiresLogin, map.list)
 
     app.get('/map/:id.json', mapAuth, map.json)
     app.get('/map/:id', mapAuth, map.show)
     app.del('/map/:id', mapAuth, map.destroy)
     app.put('/map/:id', mapAuth, map.update)
-    app.post('/map/', auth.requiresLogin, map.create)
+    app.put('/map/', auth.requiresLogin, map.create)
     app.param('id', map.load)
 
 }
