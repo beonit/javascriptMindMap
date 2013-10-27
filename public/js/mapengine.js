@@ -39,7 +39,8 @@ function Node(parentsId) {
                     , edgeColog : "#000000"
                     , edgeThick : 1 };
     // link
-    this.link = {left : [], right : [], parents : parentsId};
+    this.link = { left : [], right : [], parents : parentsId };
+    this.lastVisit = { left : null, right : null };
     // draw
     this.display = true;
     this.drawPos = {start:{x:0, y:0}, end:{x:0, y:0}};
@@ -53,9 +54,9 @@ function Node(parentsId) {
     this.offsetY = 0;
 };
 
-function Users(rootid) {
+function Users(rootid, db) {
     var users = { "owner" : rootid, };
-    var select = { "owner" : [], }
+    var select = { "owner" : [], };
     return {
         get : function(uname) { return users[uname]; },
         getNameById : function(nid) {
@@ -64,7 +65,10 @@ function Users(rootid) {
             }
             return null;
         },
-        update : function(uname, nid) { users[uname] = nid; },
+        update : function(uname, nid) {
+            db.updateLastVisit(nid);
+            users[uname] = nid;
+        },
         remove : function(uname) { users.pop(uname); },
     }
 }
@@ -94,11 +98,15 @@ function NodeDB() {
     };
 
     var _clone = function(buffer, nid, pid) {
-        buffer.push(JSON.parse(JSON.stringify(nodeDB[nid])));
+        var clone = JSON.parse(JSON.stringify(nodeDB[nid]));
+        clone.link.right = [];
+        clone.link.left = [];
+        clone.link.parents = pid;
+        clone.lastVisit.left = null;
+        clone.lastVisit.right = null;
+
+        buffer.push(clone);
         var bufferId = buffer.length - 1;
-        buffer[bufferId].link.right = [];
-        buffer[bufferId].link.left = [];
-        buffer[bufferId].link.parents = pid;
 
         var childs = nodeDB[nid].link.right;
         for(var i in childs) {
@@ -204,6 +212,12 @@ function NodeDB() {
             return DIRECT.RIGHT;
         } else {
             return DIRECT.LEFT;
+        }
+    };
+
+    var checkDisplay = function(nid) {
+        if(nid) {
+            return nodeDB[nid].display;
         }
     };
 
@@ -323,6 +337,16 @@ function NodeDB() {
         return nodeDB.length - 1;
     };
 
+    var updateLastVisit = function(nid) {
+        var pid = nodeDB[nid].link.parents;
+        var dir = checkDirection(nid);
+        if(dir == DIRECT.LEFT) {
+            nodeDB[pid].lastVisit.left = nid;
+        } else if(dir == DIRECT.RIGHT) {
+            nodeDB[pid].lastVisit.right = nid;
+        }
+    }
+
     var importData = function(data) {
         nodeDB = data.nodeDB;
         roots = data.roots;
@@ -345,6 +369,7 @@ function NodeDB() {
         addNode : addNode,
         appendChild : appendChild,
         checkDirection : checkDirection,
+        checkDisplay : checkDisplay,
         copyToClipboard : copyToClipboard,
         create : create,
         createRoot : createRoot,
@@ -362,6 +387,7 @@ function NodeDB() {
         show : show,
         swap : swap,
         swapOrder : swapOrder,
+        updateLastVisit : updateLastVisit,
         gc: function(nid) {
             /*
             TODO : find nodes that unreachable from nid and
@@ -382,14 +408,17 @@ function Map(config) {
     (function init() {
         db = new NodeDB();
         var nid = db.createRoot();
-        users = new Users(nid);
+        users = new Users(nid, db);
         painter = new Painter(db, users, config);
     })();
 
     var getLeftChild = function(nid) {
-        var child, node = db.get(nid);
+        var node = db.get(nid);
+        if(db.checkDisplay(node.lastVisit.left)) {
+            return node.lastVisit.left;
+        }
         for(var i in node.link.left) {
-            child = db.get(node.link.left[i]);
+            var child = db.get(node.link.left[i]);
             if(child.display) {
                 return node.link.left[i];
             }
@@ -398,9 +427,12 @@ function Map(config) {
     };
 
     var getRightChild = function(nid) {
-        var child, node = db.get(nid);
+        var node = db.get(nid);
+        if(db.checkDisplay(node.lastVisit.right)) {
+            return node.lastVisit.right;
+        }
         for(var i in node.link.right) {
-            child = db.get(node.link.right[i]);
+            var child = db.get(node.link.right[i]);
             if(child.display) {
                 return node.link.right[i];
             }
@@ -661,7 +693,7 @@ function Map(config) {
     var fromJSON = function(dataStr) {
         var data = JSON.parse(dataStr);
         db.importData(data.db);
-        users.update("owner", data.users);
+        users.update("owner", 0);
     }
 
     var toJSON = function() {
