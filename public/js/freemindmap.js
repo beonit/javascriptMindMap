@@ -9,7 +9,6 @@ function MapController(mapArgs) {
     this.insertAfterSibling = function(e) { map.addAfterSibling(); return true; };
     this.insertBeforeSibling = function(e) { map.addBeforeSibling(); return true; };
     this.save = function(e) { return false; };
-    this.load = function(e) { return false; };
     this.bold = function(e) { return true; };
     this.italic = function(e) { return true; };
     this.cut = function(e) { map.cut(); return true; };
@@ -39,19 +38,26 @@ function MapController(mapArgs) {
         editMode = EDITMODE.EDITING;
         var node = map.getClone({"uname":"owner"});
         editor[node.mimetype](node
-            , {13 : function(n) {
-                editMode = EDITMODE.SUBMIT;
-                map.edit({"uname":"owner", "node":n});
-            }, 27 : function(n) {
+            , {13 : function(n) { // ENTER
                 editMode = EDITMODE.NONE;
-            }, "measure" : function(n) {
+                map.edit({"uname":"owner", "node":n});
+            }, 27 : function(n) { // ESC
+                editMode = EDITMODE.NONE;
+            }}, {"measure" : function(n) {
                 return map.measureWidth(n);
+            }, "submit" : function(n) {
+                editMode = EDITMODE.NONE;
+                map.edit({"uname":"owner", "node":n});
+                redrawFunc();
+            }, "drag" : function(n) {
+                editMode = EDITMODE.NONE;
             }});
         return true;
     };
 
     var editModeFuncs = {
         13 : this.enter,
+
     };
 
     var nonEditModeKey = {
@@ -90,11 +96,14 @@ function MapController(mapArgs) {
         13 : this.insertBeforeSibling
     }
 
+    var redrawFunc = null;
+
     this.FreeMindmapLoad = function (event) {
         var canvas = document.getElementById(mapArgs.mapId);
         var container = document.getElementById(mapArgs.containerId);
         var ctx = canvas.getContext('2d');
         ctx.lineCap = 'round';
+        redrawFunc = drawAll;
 
         // resize the canvas to fill browser window dynamically
         window.addEventListener('resize', resizeCanvas, false);
@@ -172,15 +181,19 @@ function MapController(mapArgs) {
         function mousemoveHandler(e) {
             var currentTime = Date.now();
             if(e.button == 0 && leftDown && currentTime - lastDrawTime > 33) {
-                // do drag
+                if(editMode == EDITMODE.EDITING) {
+                    editor["drag"](posDownX - e.x, posDownY - e.y);
+                }
                 map.moveCanvas({"x":posDownX - e.x, "y":posDownY - e.y});
+                var node = map.getClone({"uname":"owner"});
                 posDownX = e.x;
                 posDownY = e.y;
                 drawAll();
                 lastDrawTime = currentTime;
             } else if(!leftDown && currentTime - lastDrawTime > 33) {
-                if(map.moveCursor({"x":e.x - canvas.offsetLeft
-                    , "y":e.y - canvas.offsetTop})) {
+                if(editMode != EDITMODE.EDITING
+                    && map.moveCursor({"x":e.x - canvas.offsetLeft
+                        , "y":e.y - canvas.offsetTop})) {
                     drawAll();
                     lastDrawTime = currentTime;
                 }
@@ -199,6 +212,9 @@ function MapController(mapArgs) {
 
                 }
             }
+            if(editMode == EDITMODE.EDITING) {
+                editor["click"](posDownX, posDownY);
+            }
         }
     }
 
@@ -211,7 +227,9 @@ function MapController(mapArgs) {
     }
 
     this.load = function(dataStr) {
-        return map.fromJSON(dataStr);
+        map.fromJSON(dataStr)
+        redrawFunc();
+        return;
     }
 }
 

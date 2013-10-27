@@ -1,6 +1,8 @@
 function Editor(mapArgs) {
 
-    var editTextPlain = function(n, callbacks) {
+    var dragFunc, clickFunc;
+
+    var editTextPlain = function(n, keyCallbacks, callbacks) {
         var input = document.getElementById(mapArgs.inputTextPlainId);
         input.style.left = n.drawPos.start.x + "px";
         input.style.top = n.drawPos.start.y + "px";
@@ -13,33 +15,50 @@ function Editor(mapArgs) {
         var keyListener = function(e) {
             n.data = input.value;
             var newWidth = callbacks["measure"](n);
-            if(callbacks[e.keyCode]) {
-                input.removeEventListener("keydown", keyListener);
+            if(keyCallbacks[e.keyCode]) {
+                input.removeEventListener("keydown", keyListener, false);
                 input.style.display = "none";
-                callbacks[e.keyCode](n);
-            } if(newWidth > minWidth) {
+                keyCallbacks[e.keyCode](n);
+            }
+            if(newWidth > minWidth) {
                 input.style.width = newWidth + 10 + "px";
             }
         };
         input.addEventListener("keydown", keyListener, false);
+        var submitFunc = function(x, y) {
+            n.data = input.value;
+            input.removeEventListener("keydown", keyListener, false);
+            input.style.display = "none";
+            callbacks["submit"](n);
+        };
+        clickFunc = submitFunc;
+        dragFunc = submitFunc;
     };
 
 
-    var editTextHtml = function(n, callbacks) {
+    var editTextHtml = function(n, keyCallbacks, callbacks) {
         $('#editModal').modal('show');
     };
 
-    var editUri = function(n, callbacks) {
+    var editUri = function(n, keyCallbacks, callbacks) {
         $('#editModal').modal('show');
     };
 
-    var editImage = function(n, callbacks) {
+    var editImage = function(n, keyCallbacks, callbacks) {
         $('#editModal').modal('show');
     };
 
-    var editAudio = function(n, callbacks) {
+    var editAudio = function(n, keyCallbacks, callbacks) {
         $('#editModal').modal('show');
     };
+
+    var dragEvent = function(x, y) {
+        dragFunc(x, y);
+    };
+
+    var clickEvent = function(x, y) {
+        clickFunc(x, y);
+    }
 
     var editMode = {
         "text/plain" : editTextPlain,
@@ -47,6 +66,8 @@ function Editor(mapArgs) {
         "text/uri-list" : editUri,
         "image" : editImage,
         "audio" : editAudio,
+        "drag" : dragEvent,
+        "click" : clickEvent,
     };
 
     return editMode;

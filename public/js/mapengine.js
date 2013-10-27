@@ -93,25 +93,30 @@ function NodeDB() {
         }
     };
 
-    var _copyToClipboard = function(nid) {
-        if(!nodeDB[nid].display)
-            return;
-        clipboard.push(JSON.parse(JSON.stringify(nodeDB[nid])));
-        var index = clipboard.length - 1;
-        clipboard[index].link.right = [];
-        clipboard[index].link.left = [];
+    var _clone = function(buffer, nid, pid) {
+        buffer.push(JSON.parse(JSON.stringify(nodeDB[nid])));
+        var bufferId = buffer.length - 1;
+        buffer[bufferId].link.right = [];
+        buffer[bufferId].link.left = [];
+        buffer[bufferId].link.parents = pid;
 
-        var newChildIndex;
-        for(var childIndex in nodeDB[nid].link.right) {
-            newChildIndex = _copyToClipboard(nodeDB[nid].link.right[childIndex]);
-            clipboard[index].link.right.push(newChildIndex);
+        var childs = nodeDB[nid].link.right;
+        for(var i in childs) {
+            var childId = childs[i];
+            if(nodeDB[childId].display) {
+                var newChildIndex = _clone(buffer, childId, bufferId);
+                buffer[bufferId].link.right.push(newChildIndex);
+            }
         }
-        var newChildIndex;
-        for(var childIndex in nodeDB[nid].link.left) {
-            newChildIndex = _copyToClipboard(nodeDB[nid].link.left[childIndex]);
-            clipboard[index].link.right.push(newChildIndex);
+        var childs = nodeDB[nid].link.left;
+        for(var i in childs) {
+            var childId = childs[i];
+            if(nodeDB[childId].display) {
+                var newChildIndex = _clone(buffer, childId, bufferId);
+                buffer[bufferId].link.left.push(newChildIndex);
+            }
         }
-        return index;
+        return bufferId;
     };
 
     var _pasteFromClipboard = function(clipId, pid, direct) {
@@ -119,13 +124,17 @@ function NodeDB() {
         newNode.link.parents = pid;
         newNode.link.left = [];
         newNode.link.right = [];
-        var newNodeId = appendChild(pid, newNode);
+        var nid = appendChild(pid, newNode);
 
-        var childList = clipboard[clipId].link.right;
-        for(var childIndex in childList) {
-            _pasteFromClipboard(childList[childIndex], newNodeId, direct);
+        var childs = clipboard[clipId].link.right;
+        for(var i in childs) {
+            _pasteFromClipboard(childs[i], nid, direct);
         }
-        return newNodeId;
+        var childs = clipboard[clipId].link.left;
+        for(var i in childs) {
+            _pasteFromClipboard(childs[i], nid, direct);
+        }
+        return nid;
     };
 
     var _getChildListSize = function(childList) {
@@ -243,7 +252,7 @@ function NodeDB() {
 
     var copyToClipboard = function(nid) {
         clipboard = [];
-        _copyToClipboard(nid);
+        _clone(clipboard, nid, 0);
     };
 
     var pasteFromClipBoard = function(nid) {
@@ -320,7 +329,13 @@ function NodeDB() {
     };
 
     var exportData = function() {
-        return { nodeDB : nodeDB, roots : roots };
+        var buffer = [];
+        for(var i in roots) {
+            if(nodeDB[roots[i]].display) {
+                _clone(buffer, roots[i], 0);
+            }
+        }
+        return { nodeDB : buffer, roots : [0] };
     };
 
     // DB APIs
