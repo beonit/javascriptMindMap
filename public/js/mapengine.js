@@ -657,6 +657,19 @@ function Map(config) {
         }
     };
 
+    var fold = function() {
+        var nid = users.get("owner");
+        var direct = db.checkDirection(nid);
+        if(direct != DIRECT.ROOT) {
+            var node = db.get(nid);
+            if(direct == DIRECT.RIGHT && node.link.right.length > 0) {
+                node.fold = !node.fold;
+            } else if(direct == DIRECT.LEFT && node.link.left.length > 0) {
+                node.fold = !node.fold;
+            }
+        }
+    }
+
     var copy = function() {
         var nid = users.get("owner");
         db.copyToClipboard(nid);
@@ -708,8 +721,9 @@ function Map(config) {
         copy : copy,
         cut : cut,
         draw : draw,
-        getClone : getClone,
         edit : edit,
+        fold : fold,
+        getClone : getClone,
         keyDown : keyDown,
         keyLeft : keyLeft,
         keyRight : keyRight,
@@ -786,6 +800,22 @@ function Painter(db, users, config) {
         ctx.lineTo(posX + node.measure.width + margin, posY + 2);
         ctx.stroke();
         ctx.closePath();
+
+        // fold mark
+        if(node.fold) {
+            ctx.beginPath();
+            var posXOffset = 0;
+            if(node.link.left.length > 0) {
+                posXOffset = -2;
+            } else if(node.link.right.length > 0) {
+                posXOffset = node.measure.width + 4;
+            }
+            ctx.arc(posX + posXOffset, posY + 2, 2, 0, 2 * Math.PI, false);
+            ctx.fillStyle = 'black';
+            ctx.fill();
+            ctx.stroke();
+            ctx.closePath();
+        }
 
         // update node draw pos
         node.drawPos.start = {x : posX, y : posY - node.measure.height};
@@ -877,10 +907,10 @@ function Painter(db, users, config) {
             return 0;
         }
         drawNode(ctx, node, nid, posX, posY);
-        if(node.link.left.length > 0) {
+        if(!node.fold && node.link.left.length > 0) {
             drawLeftChilds(ctx, node, nid, posX, posY);
         }
-        if(node.link.right.length > 0) {
+        if(!node.fold && node.link.right.length > 0) {
             drawRightChilds(ctx, node, nid, posX, posY);
         }
         return;
@@ -913,23 +943,27 @@ function Painter(db, users, config) {
 
         // measure right child size
         node.rHeight = 0;
-        for(var i in node.link.right) {
-            if(db.get(node.link.right[i]).display) {
-                if(node.rHeight != 0) {
-                    node.rHeight += marginNodeTop;
+        if(!node.fold) {
+            for(var i in node.link.right) {
+                if(db.get(node.link.right[i]).display) {
+                    if(node.rHeight != 0) {
+                        node.rHeight += marginNodeTop;
+                    }
+                    node.rHeight += measureTree(ctx, node.link.right[i]);
                 }
-                node.rHeight += measureTree(ctx, node.link.right[i]);
             }
         }
         node.rHeight = Math.max(node.rHeight, node.measure.height);
 
         node.lHeight = 0;
-        for(var i in node.link.left) {
-            if(db.get(node.link.left[i]).display) {
-                if(node.lHeight != 0) {
-                    node.lHeight += marginNodeTop;
+        if(!node.fold) {
+            for(var i in node.link.left) {
+                if(db.get(node.link.left[i]).display) {
+                    if(node.lHeight != 0) {
+                        node.lHeight += marginNodeTop;
+                    }
+                    node.lHeight += measureTree(ctx, node.link.left[i]);
                 }
-                node.lHeight += measureTree(ctx, node.link.left[i]);
             }
         }
         node.lHeight = Math.max(node.lHeight, node.measure.height);

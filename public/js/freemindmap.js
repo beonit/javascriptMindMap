@@ -6,6 +6,7 @@ function MapController(mapArgs) {
     var editMode = EDITMODE.NONE;
 
     this.enter = function(e) { return true; };
+    this.fold = function(e) { map.fold(); return true; };
     this.insertAfterSibling = function(e) { map.addAfterSibling(); return true; };
     this.insertBeforeSibling = function(e) { map.addBeforeSibling(); return true; };
     this.save = function(e) { return false; };
@@ -62,6 +63,7 @@ function MapController(mapArgs) {
 
     var nonEditModeKey = {
         13 : this.insertAfterSibling,
+        32 : this.fold,
         39 : this.directRight,
         38 : this.directUp,
         37 : this.directLeft,
