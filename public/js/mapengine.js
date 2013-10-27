@@ -414,6 +414,9 @@ function Map(config) {
 
     var getLeftChild = function(nid) {
         var node = db.get(nid);
+        if(node.fold) {
+            return nid;
+        }
         if(db.checkDisplay(node.lastVisit.left)) {
             return node.lastVisit.left;
         }
@@ -428,6 +431,9 @@ function Map(config) {
 
     var getRightChild = function(nid) {
         var node = db.get(nid);
+        if(node.fold) {
+            return nid;
+        }
         if(db.checkDisplay(node.lastVisit.right)) {
             return node.lastVisit.right;
         }
