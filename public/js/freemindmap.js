@@ -15,8 +15,8 @@ function MapController(mapArgs) {
     this.cut = function(e) { map.cut(); return true; };
     this.copy = function(e) { map.copy(); return true; };
     this.paste = function(e) { map.paste(); return true; };
-    this.undo = function(e) { return true; };
-    this.redo = function(e) { return true; };
+    this.undo = function(e) { return map.undo(); true; };
+    this.redo = function(e) { return map.redo(); true; };
     this.directRight = function(e) { map.keyRight(); return true; };
     this.directUp = function(e) { map.keyUp(canvasHeight); return true; };
     this.directLeft = function(e) { map.keyLeft(); return true; };
@@ -83,8 +83,8 @@ function MapController(mapArgs) {
         88 : this.cut,
         67 : this.copy,
         86 : this.paste,
-        89 : this.redo,  // z
-        90 : this.undo,  // y
+        89 : this.redo, // y
+        90 : this.undo, // z
     };
 
     var altFuncs = {

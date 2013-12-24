@@ -475,17 +475,18 @@ function Map(config) {
     };
 
     var append = function(arg) {
+        console.log("append");
         var currentNid = users.get(arg["uname"]);
         var newNode = new Node(currentNid);
         var newNodeId = db.appendChild(currentNid, newNode);
         users.update(arg["uname"], newNodeId);
         appendUndo(function() {
-                db.hide(newNodeId);
-                users.update(arg["uname"], currentNid);
-            } , function() {
-                db.show(newNodeId);
-                users.update(arg["uname"], newNodeId);
-            });
+            db.hide(newNodeId);
+            users.update(arg["uname"], currentNid);
+        } , function() {
+            db.show(newNodeId);
+            users.update(arg["uname"], newNodeId);
+        });
     };
 
     var hide = function(arg) {
@@ -758,6 +759,7 @@ function Map(config) {
         redo : redo,
         remove : hide,
         undo : undo,
+        redo : redo,
         title : title,
         toJSON : toJSON,
         fromJSON : fromJSON,
