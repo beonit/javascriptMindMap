@@ -459,7 +459,12 @@ function Map(config) {
         return nid;
     };
 
-    var getClone = function(arg) {
+    var cloneDrawInfo = function(arg) {
+        var nid = users.get(arg["uname"]);
+        return JSON.parse(JSON.stringify(db.getDrawInfo(nid)));
+    };
+
+    var cloneNode = function(arg) {
         var nid = users.get(arg["uname"]);
         return JSON.parse(JSON.stringify(db.get(nid)));
     };
@@ -770,7 +775,8 @@ function Map(config) {
         draw : draw,
         edit : edit,
         fold : fold,
-        getClone : getClone,
+        cloneNode : cloneNode,
+        cloneDrawInfo : cloneDrawInfo,
         keyDown : keyDown,
         keyLeft : keyLeft,
         keyRight : keyRight,

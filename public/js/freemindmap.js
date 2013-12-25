@@ -41,8 +41,9 @@ function MapController(mapArgs) {
     this.f1 = function(e) { return true; };
     this.f2 = function(e) {
         editMode = EDITMODE.EDITING;
-        var node = map.getClone({"uname":"owner"});
-        editor[node.mimetype](node
+        var node = map.cloneNode({"uname":"owner"});
+        var drawInfo = map.cloneDrawInfo({"uname":"owner"});
+        editor[node.mimetype](node, drawInfo
             , {13 : function(n) { // ENTER
                 editMode = EDITMODE.NONE;
                 map.edit({"uname":"owner", "node":n});
@@ -191,7 +192,6 @@ function MapController(mapArgs) {
                     editor["drag"](posDownX - e.x, posDownY - e.y);
                 }
                 map.moveCanvas({"x":posDownX - e.x, "y":posDownY - e.y});
-                var node = map.getClone({"uname":"owner"});
                 posDownX = e.x;
                 posDownY = e.y;
                 drawAll();

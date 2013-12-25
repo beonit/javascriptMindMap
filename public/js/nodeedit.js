@@ -2,16 +2,16 @@ function Editor(mapArgs) {
 
     var dragFunc, clickFunc;
 
-    var editTextPlain = function(n, keyCallbacks, callbacks) {
+    var editTextPlain = function(n, drawInfo, keyCallbacks, callbacks) {
         var input = document.getElementById(mapArgs.inputTextPlainId);
-        input.style.left = n.drawPos.start.x + "px";
-        input.style.top = n.drawPos.start.y + "px";
-        input.style.width = n.measure.width + 10 + "px";
+        input.style.left = drawInfo.drawPos.start.x + "px";
+        input.style.top = drawInfo.drawPos.start.y + "px";
+        input.style.width = drawInfo.measure.width + 10 + "px";
         input.value = n.data;
         input.style.display = "block";
         input.focus();
         input.select();
-        var minWidth = n.measure.width;
+        var minWidth = drawInfo.measure.width;
         var keyListener = function(e) {
             n.data = input.value;
             var newWidth = callbacks["measure"](n);
@@ -36,19 +36,19 @@ function Editor(mapArgs) {
     };
 
 
-    var editTextHtml = function(n, keyCallbacks, callbacks) {
+    var editTextHtml = function(n, drawInfo, keyCallbacks, callbacks) {
         $('#editModal').modal('show');
     };
 
-    var editUri = function(n, keyCallbacks, callbacks) {
+    var editUri = function(n, drawInfo, keyCallbacks, callbacks) {
         $('#editModal').modal('show');
     };
 
-    var editImage = function(n, keyCallbacks, callbacks) {
+    var editImage = function(n, drawInfo, keyCallbacks, callbacks) {
         $('#editModal').modal('show');
     };
 
-    var editAudio = function(n, keyCallbacks, callbacks) {
+    var editAudio = function(n, drawInfo, keyCallbacks, callbacks) {
         $('#editModal').modal('show');
     };
 
