@@ -814,9 +814,7 @@ function Painter(db, users, config) {
             var posX = width / 2 - canvasX -
                 ctx.measureText(node.data).width / 2;
             var posY = height / 2 - canvasY;
-            ctx.beginPath();
             drawNodeTree(ctx, node, nid, posX, posY);
-            ctx.closePath();
         }
     }
 
@@ -845,6 +843,7 @@ function Painter(db, users, config) {
         // draw under line
         ctx.beginPath();
         ctx.fillStyle = node.font.edgeColor;
+        ctx.lineWidth = node.font.edgeThick;
         ctx.lineWith = 1;
         ctx.moveTo(posX, posY + 2);
         ctx.lineTo(posX + drawInfo.measure.width + margin, posY + 2);
@@ -873,6 +872,7 @@ function Painter(db, users, config) {
     };
 
     var drawLeftEdge = function(ctx, node, fromX, fromY, toX, toY) {
+        ctx.beginPath();
         ctx.fillStyle = node.font.edgeColor;
         ctx.lineWidth = node.font.edgeThick;
         var EdgeBezier = config.get("marginNodeLeft") / 2;
@@ -880,9 +880,11 @@ function Painter(db, users, config) {
         ctx.bezierCurveTo(fromX - EdgeBezier, fromY + 2, toX + EdgeBezier,
                           toY + 2, toX, toY + 2);
         ctx.stroke();
+        ctx.closePath();
     };
 
     var drawRightEdge = function(ctx, node, fromX, fromY, toX, toY) {
+        ctx.beginPath();
         ctx.fillStyle = node.font.edgeColor;
         ctx.lineWidth = node.font.edgeThick;
         var EdgeBezier = config.get("marginNodeLeft") / 2;
@@ -890,6 +892,7 @@ function Painter(db, users, config) {
         ctx.bezierCurveTo(fromX + EdgeBezier, fromY + 2, toX - EdgeBezier,
                           toY + 2, toX, toY + 2);
         ctx.stroke();
+        ctx.closePath();
     };
 
     var drawLeftChilds = function(ctx, node, nid, posX, posY) {
@@ -946,12 +949,12 @@ function Painter(db, users, config) {
             var childDrawInfo = db.getDrawInfo(childId);
             if(child.display) {
                 if(drawInfo.measure.height < drawInfo.rHeight) {
-                    drawRightEdge(ctx, child, fromX, fromY,
+                    drawRightEdge(ctx, child, fromX + 2, fromY,
                                   posX, posY + childDrawInfo.rHeight / 2);
                     drawNodeTree(ctx, child, childId, posX,
                                  posY + childDrawInfo.rHeight / 2);
                 } else {
-                    drawRightEdge(ctx, child, fromX, fromY,
+                    drawRightEdge(ctx, child, fromX + 2, fromY,
                                   posX, posY + childDrawInfo.rHeight);
                     drawNodeTree(ctx, child, childId, posX,
                                  posY + childDrawInfo.rHeight);
