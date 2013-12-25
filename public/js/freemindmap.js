@@ -7,8 +7,12 @@ function MapController(mapArgs) {
 
     this.enter = function(e) { return true; };
     this.fold = function(e) { map.fold(); return true; };
-    this.insertAfterSibling = function(e) { map.addAfterSibling(); return true; };
-    this.insertBeforeSibling = function(e) { map.addBeforeSibling(); return true; };
+    this.addSiblingAfter = function(e) {
+        map.addSiblingAfter(); return true;
+    };
+    this.addSiblingBefore = function(e) {
+        map.addSiblingBefore(); return true;
+    };
     this.save = function(e) { return false; };
     this.bold = function(e) { return true; };
     this.italic = function(e) { return true; };
@@ -62,7 +66,7 @@ function MapController(mapArgs) {
     };
 
     var nonEditModeKey = {
-        13 : this.insertAfterSibling,
+        13 : this.addSiblingAfter,
         32 : this.fold,
         39 : this.directRight,
         38 : this.directUp,
@@ -95,7 +99,7 @@ function MapController(mapArgs) {
     }
 
     var shiftFuncs = {
-        13 : this.insertBeforeSibling
+        13 : this.addSiblingBefore
     }
 
     var redrawFunc = null;

@@ -244,7 +244,7 @@ function NodeDB() {
         return null;
     };
 
-    var addAfterSibling = function(nid) {
+    var addSiblingAfter = function(nid) {
         var direct = checkDirection(nid);
         var parentsId = nodeDB[nid].link.parents;
         var siblingList;
@@ -254,12 +254,12 @@ function NodeDB() {
             siblingList = nodeDB[parentsId].link.left;
         }
         var childIndex = siblingList.indexOf(nid);
-        nid = create(parentsId);
-        siblingList.splice(childIndex + 1, 0, nid);
-        return nid;
+        var newNodeId = create(parentsId);
+        siblingList.splice(childIndex + 1, 0, newNodeId);
+        return newNodeId;
     };
 
-    var addBeforeSibling = function(nid) {
+    var addSiblingBefore = function(nid) {
         var direct = checkDirection(nid);
         var parentsId = nodeDB[nid].link.parents;
         var siblingList;
@@ -376,8 +376,8 @@ function NodeDB() {
 
     // DB APIs
     var DBAPIs = {
-        addAfterSibling : addAfterSibling,
-        addBeforeSibling : addBeforeSibling,
+        addSiblingAfter : addSiblingAfter,
+        addSiblingBefore : addSiblingBefore,
         addNode : addNode,
         appendChild : appendChild,
         checkDirection : checkDirection,
@@ -475,7 +475,6 @@ function Map(config) {
     };
 
     var append = function(arg) {
-        console.log("append");
         var currentNid = users.get(arg["uname"]);
         var newNode = new Node(currentNid);
         var newNodeId = db.appendChild(currentNid, newNode);
@@ -518,9 +517,17 @@ function Map(config) {
         }
     };
 
-    var undo = function() { undoList[--currentUndoIndex].undo(); };
+    var undo = function() {
+        if(currentUndoIndex > 0) {
+            undoList[--currentUndoIndex].undo();
+        }
+    };
 
-    var redo = function() { undoList[currentUndoIndex++].redo(); };
+    var redo = function() {
+        if(currentUndoIndex < undoList.length) {
+            undoList[currentUndoIndex++].redo();
+        }
+    };
 
     var appendUndo = function(undoFunc, redoFunc) {
         ArrayRemoveElement(undoList, currentUndoIndex, undoList.length - 1);
@@ -528,19 +535,33 @@ function Map(config) {
         currentUndoIndex++;
     };
 
-    var addAfterSibling = function() {
+    var addSiblingAfter = function() {
         var nid = users.get("owner");
         if(db.checkDirection(nid) != DIRECT.ROOT) {
-            nid = db.addAfterSibling(nid);
-            users.update("owner", nid);
+            var newNodeId = db.addSiblingAfter(nid);
+            users.update("owner", newNodeId);
+            appendUndo(function() {
+                db.hide(newNodeId);
+                users.update("owner", nid);
+            }, function() {
+                db.show(newNodeId);
+                users.update("owner", newNodeId);
+            });
         }
     };
 
-    var addBeforeSibling = function() {
+    var addSiblingBefore = function() {
         var nid = users.get("owner");
         if(db.checkDirection(nid) != DIRECT.ROOT) {
-            nid = db.addBeforeSibling(nid);
-            users.update("owner", nid);
+            var newNodeId = db.addSiblingBefore(nid);
+            users.update("owner", newNodeId);
+            appendUndo(function() {
+                db.hide(newNodeId);
+                users.update("owner", nid);
+            }, function() {
+                db.show(newNodeId);
+                users.update("owner", newNodeId);
+            });
         }
     };
 
@@ -684,11 +705,15 @@ function Map(config) {
         var direct = db.checkDirection(nid);
         if(direct != DIRECT.ROOT) {
             var node = db.get(nid);
-            if(direct == DIRECT.RIGHT && node.link.right.length > 0) {
-                node.fold = !node.fold;
-            } else if(direct == DIRECT.LEFT && node.link.left.length > 0) {
+            if((direct == DIRECT.RIGHT && node.link.right.length > 0)
+               || direct == DIRECT.LEFT && node.link.left.length > 0) {
                 node.fold = !node.fold;
             }
+            appendUndo(function() {
+                node.hide = !node.fold;
+            }, function() {
+                node.hide = !node.fold;
+            });
         }
     }
 
@@ -737,8 +762,8 @@ function Map(config) {
     };
 
     var mapAPIs = {
-        addAfterSibling : addAfterSibling,
-        addBeforeSibling : addBeforeSibling,
+        addSiblingAfter : addSiblingAfter,
+        addSiblingBefore : addSiblingBefore,
         append : append,
         copy : copy,
         cut : cut,
