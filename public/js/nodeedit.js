@@ -19,6 +19,7 @@ function Editor(mapArgs) {
                 input.removeEventListener("keydown", keyListener, false);
                 input.style.display = "none";
                 keyCallbacks[e.keyCode](n);
+                stopKeyPropagate(e);
             }
             if(newWidth > minWidth) {
                 input.style.width = newWidth + 10 + "px";
@@ -34,7 +35,6 @@ function Editor(mapArgs) {
         clickFunc = submitFunc;
         dragFunc = submitFunc;
     };
-
 
     var editTextHtml = function(n, drawInfo, keyCallbacks, callbacks) {
         $('#editModal').modal('show');
@@ -58,7 +58,12 @@ function Editor(mapArgs) {
 
     var clickEvent = function(x, y) {
         clickFunc(x, y);
-    }
+    };
+
+    var stopKeyPropagate = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    };
 
     var editMode = {
         "text/plain" : editTextPlain,

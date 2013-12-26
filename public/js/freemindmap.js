@@ -47,6 +47,7 @@ function MapController(mapArgs) {
             , {13 : function(n) { // ENTER
                 editMode = EDITMODE.NONE;
                 map.edit({"uname":"owner", "node":n});
+                redrawFunc();
             }, 27 : function(n) { // ESC
                 editMode = EDITMODE.NONE;
             }}, {"measure" : function(n) {
