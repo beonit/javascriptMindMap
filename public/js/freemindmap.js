@@ -5,6 +5,8 @@ var gMapConfig = (function() {
         'marginNodeLeft' : 40,
         'cursorColor' : "#CCCCCC",
         'cursorMargin' : 3,
+        'mapId' : "freemindmap",
+        'containerId' : "mapContainer",
     };
 
     return {
@@ -14,16 +16,16 @@ var gMapConfig = (function() {
     }
 })();
 
-function MapController(mapArgs) {
+function MapController() {
+    var container = document.getElementById(gMapConfig.get("containerId"));
     var nodeFuncs = {
-        "text/plain" : new node_plaintext(),
+        "text/plain" : new node_plaintext(container),
     };
-
     var map = new Map(nodeFuncs);
     var canvasWidth, canvasHeight;
-    var editor = new Editor(mapArgs);
     var EDITMODE = {NONE:0, EDITING:1, SUBMIT:2};
     var editMode = EDITMODE.NONE;
+    var redrawFunc = null;
 
     this.enter = function(e) { return true; };
     this.fold = function(e) { map.fold(); return true; };
@@ -61,30 +63,17 @@ function MapController(mapArgs) {
     this.f1 = function(e) { return true; };
     this.f2 = function(e) {
         editMode = EDITMODE.EDITING;
-        var node = map.cloneNode({"uname":"owner"});
-        var drawInfo = map.cloneDrawInfo({"uname":"owner"});
-        editor[node.mimetype](node, drawInfo
-            , {13 : function(n) { // ENTER
-                editMode = EDITMODE.NONE;
-                map.edit({"uname":"owner", "node":n});
-                redrawFunc();
-            }, 27 : function(n) { // ESC
-                editMode = EDITMODE.NONE;
-            }}, {"measure" : function(n) {
-                return map.measureWidth(n);
-            }, "submit" : function(n) {
-                editMode = EDITMODE.NONE;
-                map.edit({"uname":"owner", "node":n});
-                redrawFunc();
-            }, "drag" : function(n) {
-                editMode = EDITMODE.NONE;
-            }});
+        map.startEdit(ctx, finishEdit);
         return true;
+    };
+
+    var finishEdit = function() {
+        editMode = EDITMODE.NONE;
+        redrawFunc();
     };
 
     var editModeFuncs = {
         13 : this.enter,
-
     };
 
     var nonEditModeKey = {
@@ -124,12 +113,11 @@ function MapController(mapArgs) {
         13 : this.addSiblingBefore
     }
 
-    var redrawFunc = null;
-
+    // TODO move to engine
     this.FreeMindmapLoad = function (event) {
-        var canvas = document.getElementById(mapArgs.mapId);
-        var container = document.getElementById(mapArgs.containerId);
-        var ctx = canvas.getContext('2d');
+        var canvas = document.getElementById(gMapConfig.get("mapId"));
+        var container = document.getElementById(gMapConfig.get("containerId"));
+        ctx = canvas.getContext('2d');
         ctx.lineCap = 'round';
         redrawFunc = drawAll;
 
@@ -210,7 +198,7 @@ function MapController(mapArgs) {
             var currentTime = Date.now();
             if(e.button == 0 && leftDown && currentTime - lastDrawTime > 33) {
                 if(editMode == EDITMODE.EDITING) {
-                    editor["drag"](posDownX - e.x, posDownY - e.y);
+                    map.submitEdit();
                 }
                 map.moveCanvas({"x":posDownX - e.x, "y":posDownY - e.y});
                 posDownX = e.x;
@@ -240,7 +228,7 @@ function MapController(mapArgs) {
                 }
             }
             if(editMode == EDITMODE.EDITING) {
-                editor["click"](posDownX, posDownY);
+                map.submitEdit();
             }
         }
     }
@@ -260,11 +248,7 @@ function MapController(mapArgs) {
     }
 }
 
-mm = new MapController({
-    mapId : "freemindmap",
-    containerId : "mapContainer",
-    inputTextPlainId : "inputTextPlain"
-});
+mm = new MapController();
 
 if (window.addEventListener) { // Mozilla, Netscape, Firefox
     window.addEventListener('load', mm.FreeMindmapLoad, false);

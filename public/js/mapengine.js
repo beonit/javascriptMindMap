@@ -443,16 +443,6 @@ function Map(nodeFuncs) {
         return nid;
     };
 
-    var cloneDrawInfo = function(arg) {
-        var nid = users.get(arg["uname"]);
-        return JSON.parse(JSON.stringify(db.getDrawInfo(nid)));
-    };
-
-    var cloneNode = function(arg) {
-        var nid = users.get(arg["uname"]);
-        return JSON.parse(JSON.stringify(db.get(nid)));
-    };
-
     var moveCursor = function(arg) {
         var nid = db.getIdByPoint(arg.x, arg.y);
         var oldNid = users.get("owner");
@@ -739,6 +729,29 @@ function Map(nodeFuncs) {
         }
     };
 
+    var startEdit = function(ctx, finishCallback) {
+        var nid = users.get("owner");
+        var node = JSON.parse(JSON.stringify(db.get(nid)));
+        var drawInfo = JSON.parse(JSON.stringify(db.getDrawInfo(nid)));
+        var editFinish = function() {
+            nodeFuncs[node.mimetype].finishEdit();
+            finishCallback();
+            mapAPIs.submitEdit = null;
+            mapAPIs.cancelEdit = null;
+        };
+        var submit = function() {
+            edit({"uname":"owner", "node":node});
+            editFinish();
+        };
+        var cancel = function() {
+            editFinish();
+        };
+        mapAPIs.submitEdit = submit;
+        mapAPIs.cancelEdit = cancel;
+        nodeFuncs[node.mimetype].startEdit(ctx, node, drawInfo,
+                                             submit, cancel);
+    };
+
     var fromJSON = function(dataStr) {
         var data = JSON.parse(dataStr);
         db.importData(data.db);
@@ -754,13 +767,12 @@ function Map(nodeFuncs) {
         addSiblingAfter : addSiblingAfter,
         addSiblingBefore : addSiblingBefore,
         append : append,
+        cancelEdit : null,
         copy : copy,
         cut : cut,
         draw : draw,
         edit : edit,
         fold : fold,
-        cloneNode : cloneNode,
-        cloneDrawInfo : cloneDrawInfo,
         keyDown : keyDown,
         keyLeft : keyLeft,
         keyRight : keyRight,
@@ -773,6 +785,8 @@ function Map(nodeFuncs) {
         paste : paste,
         redo : redo,
         remove : hide,
+        startEdit : startEdit,
+        submitEdit : null,
         undo : undo,
         redo : redo,
         title : title,
