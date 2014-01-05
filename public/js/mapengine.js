@@ -12,22 +12,6 @@ function ArrayPushFirst(l, e) {
     l.reverse();
 };
 
-function CreateMapConfig() {
-    var private = {
-        'backgroundColor' : "#FFFFFF",
-        'marginNodeTop' : 15,
-        'marginNodeLeft' : 40,
-        'cursorColor' : "#CCCCCC",
-        'cursorMargin' : 3,
-    };
-
-    return {
-        get: function(name) { return private[name]; },
-        set: function(name, value) { private[name] = value; },
-        toJSON: function() { return JSON.stringify(private); }
-    }
-};
-
 function Node(parentsId) {
     // data
     this.mimetype = "text/plain";
@@ -413,7 +397,7 @@ function NodeDB() {
     return DBAPIs;
 }
 
-function Map(config) {
+function Map(nodeFuncs) {
     var users, db, undoList = [], currentUndoIndex = 0;
     var painter;
     var clipBoard = false;
@@ -422,7 +406,7 @@ function Map(config) {
         db = new NodeDB();
         var nid = db.createRoot();
         users = new Users(nid, db);
-        painter = new Painter(db, users, config);
+        painter = new Painter(db, users, nodeFuncs);
     })();
 
     var getLeftChild = function(nid) {
@@ -616,7 +600,7 @@ function Map(config) {
         var node = db.get(nid);
         var drawInfo = db.getDrawInfo(nid);
         var posY, posX;
-        var marginNodeTop = config.get("marginNodeTop");
+        var marginNodeTop = gMapConfig.get("marginNodeTop");
         posX = drawInfo.drawPos.start.x;
         posY = drawInfo.drawPos.start.y - marginNodeTop;
         for(; posY > 0; posY -= marginNodeTop) {
@@ -644,7 +628,7 @@ function Map(config) {
         var node = db.get(nid);
         var drawInfo = db.getDrawInfo(nid);
         var posY, posX;
-        var marginNodeTop = config.get("marginNodeTop");
+        var marginNodeTop = gMapConfig.get("marginNodeTop");
         posX = drawInfo.drawPos.start.x;
         posY = drawInfo.drawPos.end.y + marginNodeTop;
         for(; posY < canvasHeight; posY += marginNodeTop) {
@@ -798,7 +782,7 @@ function Map(config) {
     return mapAPIs;
 }
 
-function Painter(db, users, config) {
+function Painter(db, users, nodeFuncs) {
     var canvasX = 0, canvasY = 0;
     var ctx;
 
@@ -832,11 +816,12 @@ function Painter(db, users, config) {
     var drawNode = function(ctx, node, nid, posX, posY) {
         var uname = users.getNameById(nid);
         if(uname != null) {
-            ctx.fillStyle = config.get("cursorColor");
+            ctx.fillStyle = gMapConfig.get("cursorColor");
         } else {
             ctx.fillStyle = node.font.bgColor;
         }
-        var margin = config.get("cursorMargin");
+        // draw back ground
+        var margin = gMapConfig.get("cursorMargin");
         var drawInfo = db.getDrawInfo(nid);
         ctx.fillRect(posX, posY - drawInfo.measure.height,
                      drawInfo.measure.width + margin,
@@ -844,7 +829,7 @@ function Painter(db, users, config) {
 
         // draw node
         drawSetup(ctx, node);
-        ctx.fillText(node.data, posX, posY);
+        nodeFuncs[node.mimetype].draw(ctx, node, posX, posY);
 
         // draw under line
         ctx.beginPath();
@@ -881,7 +866,7 @@ function Painter(db, users, config) {
         ctx.beginPath();
         ctx.fillStyle = node.font.edgeColor;
         ctx.lineWidth = node.font.edgeThick;
-        var EdgeBezier = config.get("marginNodeLeft") / 2;
+        var EdgeBezier = gMapConfig.get("marginNodeLeft") / 2;
         ctx.moveTo(fromX, fromY + 2);
         ctx.bezierCurveTo(fromX - EdgeBezier, fromY + 2, toX + EdgeBezier,
                           toY + 2, toX, toY + 2);
@@ -893,7 +878,7 @@ function Painter(db, users, config) {
         ctx.beginPath();
         ctx.fillStyle = node.font.edgeColor;
         ctx.lineWidth = node.font.edgeThick;
-        var EdgeBezier = config.get("marginNodeLeft") / 2;
+        var EdgeBezier = gMapConfig.get("marginNodeLeft") / 2;
         ctx.moveTo(fromX, fromY + 2);
         ctx.bezierCurveTo(fromX + EdgeBezier, fromY + 2, toX - EdgeBezier,
                           toY + 2, toX, toY + 2);
@@ -904,8 +889,8 @@ function Painter(db, users, config) {
     var drawLeftChilds = function(ctx, node, nid, posX, posY) {
         var fromX = posX;
         var fromY = posY;
-        var marginNodeLeft = config.get("marginNodeLeft");
-        var marginNodeTop = config.get("marginNodeTop");
+        var marginNodeLeft = gMapConfig.get("marginNodeLeft");
+        var marginNodeTop = gMapConfig.get("marginNodeTop");
         var drawInfo = db.getDrawInfo(nid);
         if(drawInfo.measure.height < drawInfo.lHeight) {
             posY = posY - drawInfo.lHeight / 2;
@@ -942,7 +927,7 @@ function Painter(db, users, config) {
         var drawInfo = db.getDrawInfo(nid);
         var fromX = posX + drawInfo.measure.width;
         var fromY = posY;
-        posX = posX + drawInfo.measure.width + config.get("marginNodeLeft");
+        posX = posX + drawInfo.measure.width + gMapConfig.get("marginNodeLeft");
         if(drawInfo.measure.height < drawInfo.rHeight) {
             posY = posY - drawInfo.rHeight / 2;
         } else {
@@ -984,13 +969,6 @@ function Painter(db, users, config) {
         return;
     };
 
-    var measureTextPlain = function(n) {
-        return {
-            width : ctx.measureText(n.data).width + config.get("cursorMargin"),
-            height : n.font.size
-        };
-    };
-
     var measureWidth = function(n) {
         drawSetup(ctx, n);
         return measureFuncs[n.mimetype](n).width;
@@ -1003,12 +981,12 @@ function Painter(db, users, config) {
             return 0;
         }
         var drawInfo = db.getDrawInfo(nid);
-        marginNodeTop = config.get("marginNodeTop");
-        marginNodeLeft = config.get("marginNodeLeft");
+        marginNodeTop = gMapConfig.get("marginNodeTop");
+        marginNodeLeft = gMapConfig.get("marginNodeLeft");
 
         // measure setup
         drawSetup(ctx, node);
-        drawInfo.measure = measureFuncs[node.mimetype](node);
+        drawInfo.measure = nodeFuncs[node.mimetype].measure(ctx, node);
 
         // measure right child size
         drawInfo.rHeight = 0;
@@ -1038,14 +1016,6 @@ function Painter(db, users, config) {
         drawInfo.lHeight = Math.max(drawInfo.lHeight, drawInfo.measure.height);
 
         return Math.max(drawInfo.rHeight, drawInfo.lHeight);
-    };
-
-    var measureFuncs = {
-        "text/plain" : measureTextPlain,
-        "text/html" : null,
-        "text/uri-list" : null,
-        "image" : null,
-        "audio" : null,
     };
 
     var painterAPIs = {

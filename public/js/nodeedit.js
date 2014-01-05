@@ -1,5 +1,4 @@
 function Editor(mapArgs) {
-
     var dragFunc, clickFunc;
 
     var editTextPlain = function(n, drawInfo, keyCallbacks, callbacks) {

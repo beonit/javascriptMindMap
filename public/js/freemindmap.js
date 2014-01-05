@@ -1,5 +1,25 @@
+var gMapConfig = (function() {
+    var private = {
+        'backgroundColor' : "#FFFFFF",
+        'marginNodeTop' : 15,
+        'marginNodeLeft' : 40,
+        'cursorColor' : "#CCCCCC",
+        'cursorMargin' : 3,
+    };
+
+    return {
+        get: function(name) { return private[name]; },
+        set: function(name, value) { private[name] = value; },
+        toJSON: function() { return JSON.stringify(private); }
+    }
+})();
+
 function MapController(mapArgs) {
-    var map = new Map(mapArgs["config"]);
+    var nodeFuncs = {
+        "text/plain" : new node_plaintext(),
+    };
+
+    var map = new Map(nodeFuncs);
     var canvasWidth, canvasHeight;
     var editor = new Editor(mapArgs);
     var EDITMODE = {NONE:0, EDITING:1, SUBMIT:2};
@@ -128,7 +148,7 @@ function MapController(mapArgs) {
 
         function drawAll() {
             // drawBackround
-            ctx.fillStyle = mapArgs.config.get('backgroundColor');
+            ctx.fillStyle = gMapConfig.get('backgroundColor');
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             // draw text
             map.draw({"ctx":ctx, "width":canvas.width, "height":canvas.height});
@@ -241,7 +261,6 @@ function MapController(mapArgs) {
 }
 
 mm = new MapController({
-    config : CreateMapConfig(),
     mapId : "freemindmap",
     containerId : "mapContainer",
     inputTextPlainId : "inputTextPlain"
