@@ -1,17 +1,38 @@
 var node_plaintext = function(container) {
     var _node, _ctx, _initWidth;
     var submitEdit, cancelEdit;
+    var margin = gMapConfig.get("cursorMargin");
 
     var input = document.createElement("input");
     input.style.position = "absolute";
     input.style.display = "none";
     container.appendChild(input);
 
+    var drawCursor = function(ctx, n, drawInfo, posX, posY) {
+        ctx.fillStyle = gMapConfig.get("cursorColor");
+        drawBgCommon(ctx, n, drawInfo, posX, posY);
+    };
+
+    var drawBackround = function(ctx, n, drawInfo, posX, posY) {
+        ctx.fillStyle = n.font.bgColor;
+        drawBgCommon(ctx, n, drawInfo, posX, posY);
+    };
+
+    var drawBgCommon = function(ctx, n, drawInfo, posX, posY) {
+        ctx.fillRect(posX, posY - drawInfo.measure.height,
+                     drawInfo.measure.width + margin,
+                     drawInfo.measure.height + margin);
+    }
+
     var draw = function(ctx, n, posX, posY) {
+        ctx.fillStyle = n.font.color;
+        ctx.font = n.font.size + "px " + n.font.face;
         ctx.fillText(n.data, posX, posY);
     };
 
     var measure = function(ctx, n) {
+        ctx.fillStyle = n.font.color;
+        ctx.font = n.font.size + "px " + n.font.face;
         return {
             width : ctx.measureText(n.data).width
                 + gMapConfig.get("cursorMargin"),
@@ -55,6 +76,8 @@ var node_plaintext = function(container) {
 
     return {
         draw : draw,
+        drawCursor : drawCursor,
+        drawBackround : drawBackround,
         measure : measure,
         startEdit : startEdit,
         finishEdit : finishEdit,

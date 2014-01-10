@@ -20,8 +20,10 @@ function Node(parentsId) {
                   size : 15,
                   color : "#000000",
                   bgColor : "#ffffff",
-                  edgeColog : "#000000",
-                  edgeThick : 1 };
+                };
+    this.edge = { color : "#000000",
+                  thick : 1
+                };
     // link
     this.link = { left : [], right : [], parents : parentsId };
     this.lastVisit = { left : null, right : null };
@@ -822,35 +824,27 @@ function Painter(db, users, nodeFuncs) {
         }
     }
 
-    var drawSetup = function(ctx, node) {
-        ctx.fillStyle = node.font.color;
-        ctx.font = node.font.size + "px " + node.font.face;
-    }
-
     var drawNode = function(ctx, node, nid, posX, posY) {
+        var drawInfo = db.getDrawInfo(nid);
         var uname = users.getNameById(nid);
         if(uname != null) {
-            ctx.fillStyle = gMapConfig.get("cursorColor");
+            nodeFuncs[node.mimetype].drawCursor(ctx, node,
+                                                drawInfo, posX, posY);
         } else {
-            ctx.fillStyle = node.font.bgColor;
+            nodeFuncs[node.mimetype].drawBackround(ctx, node,
+                                                   drawInfo, posX, posY);
         }
-        // draw back ground
-        var margin = gMapConfig.get("cursorMargin");
-        var drawInfo = db.getDrawInfo(nid);
-        ctx.fillRect(posX, posY - drawInfo.measure.height,
-                     drawInfo.measure.width + margin,
-                     drawInfo.measure.height + margin);
 
         // draw node
-        drawSetup(ctx, node);
         nodeFuncs[node.mimetype].draw(ctx, node, posX, posY);
 
         // draw under line
         ctx.beginPath();
-        ctx.fillStyle = node.font.edgeColor;
-        ctx.lineWidth = node.font.edgeThick;
+        ctx.fillStyle = node.edge.color;
+        ctx.lineWidth = node.edge.thick;
         ctx.lineWith = 1;
         ctx.moveTo(posX, posY + 2);
+        var margin = gMapConfig.get("cursorMargin");
         ctx.lineTo(posX + drawInfo.measure.width + margin, posY + 2);
         ctx.stroke();
         ctx.closePath();
@@ -878,8 +872,8 @@ function Painter(db, users, nodeFuncs) {
 
     var drawLeftEdge = function(ctx, node, fromX, fromY, toX, toY) {
         ctx.beginPath();
-        ctx.fillStyle = node.font.edgeColor;
-        ctx.lineWidth = node.font.edgeThick;
+        ctx.fillStyle = node.edge.color;
+        ctx.lineWidth = node.edge.thick;
         var EdgeBezier = gMapConfig.get("marginNodeLeft") / 2;
         ctx.moveTo(fromX, fromY + 2);
         ctx.bezierCurveTo(fromX - EdgeBezier, fromY + 2, toX + EdgeBezier,
@@ -890,8 +884,8 @@ function Painter(db, users, nodeFuncs) {
 
     var drawRightEdge = function(ctx, node, fromX, fromY, toX, toY) {
         ctx.beginPath();
-        ctx.fillStyle = node.font.edgeColor;
-        ctx.lineWidth = node.font.edgeThick;
+        ctx.fillStyle = node.edge.color;
+        ctx.lineWidth = node.edge.thick;
         var EdgeBezier = gMapConfig.get("marginNodeLeft") / 2;
         ctx.moveTo(fromX, fromY + 2);
         ctx.bezierCurveTo(fromX + EdgeBezier, fromY + 2, toX - EdgeBezier,
@@ -984,7 +978,6 @@ function Painter(db, users, nodeFuncs) {
     };
 
     var measureWidth = function(n) {
-        drawSetup(ctx, n);
         return measureFuncs[n.mimetype](n).width;
     };
 
@@ -999,7 +992,6 @@ function Painter(db, users, nodeFuncs) {
         marginNodeLeft = gMapConfig.get("marginNodeLeft");
 
         // measure setup
-        drawSetup(ctx, node);
         drawInfo.measure = nodeFuncs[node.mimetype].measure(ctx, node);
 
         // measure right child size
