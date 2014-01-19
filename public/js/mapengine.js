@@ -14,8 +14,9 @@ function ArrayPushFirst(l, e) {
 
 function Node(parentsId) {
     // data
-    this.mimetype = "text/plain";
+    this.mimetype = "text/uri";
     this.data = "default";
+    this.hash = null;
     this.font = { face : "Arial",
                   size : 15,
                   color : "#000000",
@@ -163,7 +164,9 @@ function NodeDB() {
     };
 
     var create = function(parentsId) {
-        nodeDB.push(new Node(parentsId));
+        var n = new Node(parentsId);
+        n.hash = nodeDB.length;
+        nodeDB.push(n);
         drawInfoDB.push(new DrawInfo());
         return nodeDB.length - 1;
     };
@@ -177,17 +180,20 @@ function NodeDB() {
     };
 
     var createRoot = function() {
-        nodeDB.push(new Node(nodeDB.length));
+        var n = new Node(nodeDB.length);
+        n.hash = nodeDB.length;
+        nodeDB.push(n);
         drawInfoDB.push(new DrawInfo());
         roots.push(nodeDB.length - 1);
         return nodeDB.length - 1;
     };
 
     var addNode = function(n) {
+        n.hash = nodeDB.length;
         nodeDB.push(n);
         drawInfoDB.push(new DrawInfo());
         return nodeDB.length - 1;
-    }
+    };
 
     var swap = function(nid1, nid2) {
         var n = nodeDB[nid1];
@@ -315,6 +321,7 @@ function NodeDB() {
     var show = function(nid) { nodeDB[nid].display = true; };
 
     var appendChild = function(parentsId, newNode) {
+        newNode.hash = nodeDB.length;
         nodeDB.push(newNode);
         drawInfoDB.push(new DrawInfo());
         var direct = checkDirection(parentsId);
@@ -733,16 +740,17 @@ function Map(nodeFuncs) {
 
     var startEdit = function(ctx, finishCallback) {
         var nid = users.get("owner");
-        var node = JSON.parse(JSON.stringify(db.get(nid)));
+        var oldNode = db.get(nid);
+        var newNode = JSON.parse(JSON.stringify(oldNode));
         var drawInfo = JSON.parse(JSON.stringify(db.getDrawInfo(nid)));
         var editFinish = function() {
-            nodeFuncs[node.mimetype].finishEdit();
+            nodeFuncs[newNode.mimetype].finishEdit(oldNode, newNode);
             finishCallback();
             mapAPIs.submitEdit = null;
             mapAPIs.cancelEdit = null;
         };
         var submit = function() {
-            edit({"uname":"owner", "node":node});
+            edit({"uname":"owner", "node":newNode});
             editFinish();
         };
         var cancel = function() {
@@ -750,8 +758,8 @@ function Map(nodeFuncs) {
         };
         mapAPIs.submitEdit = submit;
         mapAPIs.cancelEdit = cancel;
-        nodeFuncs[node.mimetype].startEdit(ctx, node, drawInfo,
-                                             submit, cancel);
+        nodeFuncs[newNode.mimetype].startEdit(ctx, newNode, drawInfo,
+                                              submit, cancel);
     };
 
     var fromJSON = function(dataStr) {
@@ -836,7 +844,7 @@ function Painter(db, users, nodeFuncs) {
         }
 
         // draw node
-        nodeFuncs[node.mimetype].draw(ctx, node, posX, posY);
+        nodeFuncs[node.mimetype].draw(ctx, node, drawInfo, posX, posY);
 
         // draw under line
         ctx.beginPath();

@@ -19,7 +19,8 @@ var gMapConfig = (function() {
 function MapController() {
     var container = document.getElementById(gMapConfig.get("containerId"));
     var nodeFuncs = {
-        "text/plain" : new node_plaintext(container),
+        "text/plain" : new node_textplain(container),
+        "text/uri" : new node_texturi(container),
     };
     var map = new Map(nodeFuncs);
     var canvasWidth, canvasHeight;

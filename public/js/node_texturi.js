@@ -1,12 +1,26 @@
-var node_textplain = function(container) {
+var node_texturi = function(container) {
     var _node, _ctx, _initWidth;
     var submitEdit, cancelEdit;
     var margin = gMapConfig.get("cursorMargin");
+    var elementPrefix = "node_texturi_";
+    var el;
 
     var input = document.createElement("input");
     input.style.position = "absolute";
     input.style.display = "none";
     container.appendChild(input);
+
+    var createElementIfItNeed = function(n) {
+        el = document.getElementById(elementPrefix + n.hash);
+        if(el == null) {
+            el = document.createElement("div");
+            el.setAttribute("id", elementPrefix + n.hash);
+            el.style.position = "absolute";
+            el.style.display = "block";
+            container.appendChild(el);
+        }
+        return el;
+    };
 
     var drawCursor = function(ctx, n, drawInfo, posX, posY) {
         ctx.fillStyle = gMapConfig.get("cursorColor");
@@ -25,22 +39,27 @@ var node_textplain = function(container) {
     }
 
     var draw = function(ctx, n, drawInfo, posX, posY) {
-        ctx.fillStyle = n.font.color;
-        ctx.font = n.font.size + "px " + n.font.face;
-        ctx.fillText(n.data, posX, posY);
+        el = createElementIfItNeed(n);
+        el.innerText = n.data;
+        el.style.left = posX + "px";
+        el.style.top = (posY - drawInfo.measure.height) + "px";
+        // ctx.fillStyle = n.font.color;
+        // ctx.font = n.font.size + "px " + n.font.face;
+        // ctx.fillText(n.data, posX, posY);
     };
 
     var measure = function(ctx, n) {
-        ctx.fillStyle = n.font.color;
-        ctx.font = n.font.size + "px " + n.font.face;
+        // TODO. measure div size
         return {
-            width : ctx.measureText(n.data).width
+            width : ctx.measureText(n.data).width + 20
                 + gMapConfig.get("cursorMargin"),
-            height : n.font.size
+            height : n.font.size + 2
         };
     };
 
     var startEdit = function(ctx, node, drawInfo, submit, cancel) {
+        var el = createElementIfItNeed(node);
+        el.style.display = "none";
         _node = node;
         _ctx = ctx;
         _initWidth = drawInfo.measure.width;
@@ -57,9 +76,15 @@ var node_textplain = function(container) {
         input.addEventListener("keydown", keyListener, false);
     };
 
-    var finishEdit = function() {
+    var finishEdit = function(oldNode, newNode) {
         input.style.display = "none";
         input.removeEventListener("keydown", keyListener, false);
+        var el = createElementIfItNeed(oldNode);
+        el.style.display = "none";
+        console.log("node id : " + newNode.hash);
+        console.log("node data : " + newNode.data);
+        el = createElementIfItNeed(newNode);
+        el.innerText = newNode.data;
     };
 
     var keyListener = function(e) {
@@ -83,9 +108,7 @@ var node_textplain = function(container) {
         finishEdit : finishEdit,
         submitEdit : function() { submitEdit(); },
         cancelEdit : function() { cancelEdit(); },
-        fold : null,
-        unfold : null,
-        onCreate : null,
-        onDelete : null,
+        onHide : null,
+        onRedisplay : null,
     };
 };
