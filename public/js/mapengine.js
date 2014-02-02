@@ -6,12 +6,6 @@ function ArrayRemoveElement(a, from, to) {
     return a.push.apply(a, rest);
 };
 
-function ArrayPushFirst(l, e) {
-    l.reverse();
-    l.push(e);
-    l.reverse();
-};
-
 function Node(parentsId) {
     // data
     this.mimetype = "text/uri";
@@ -279,6 +273,18 @@ function NodeDB() {
         return newChild;
     };
 
+    var propagateEvent = function(nid, event) {
+        var n = nodeDB[nid];
+        for(var i in n.link.right) {
+            event(nodeDB[n.link.right[i]]);
+            propagateEvent(n.link.right[i], event);
+        }
+        for(var i in n.link.left) {
+            event(nodeDB[n.link.left[i]]);
+            propagateEvent(n.link.left[i], event);
+        }
+    };
+
     var findUpperSibling = function(nid) {
         return _findUpperNidInList(nid, _getChildListHasNid(nid));
     };
@@ -392,6 +398,7 @@ function NodeDB() {
         moveToLeftNode : moveToLeftNode,
         moveToRightNode : moveToRightNode,
         pasteFromClipboard : pasteFromClipBoard,
+        propagateEvent : propagateEvent,
         show : show,
         swap : swap,
         swapOrder : swapOrder,
@@ -473,7 +480,7 @@ function Map(nodeFuncs) {
         } , function() {
             db.show(newNodeId);
             users.update(arg["uname"], newNodeId);
-        });
+        }, null);
     };
 
     var hide = function(arg) {
@@ -490,7 +497,7 @@ function Map(nodeFuncs) {
                     db.hide(currentNid);
                     db.show(newNodeId);
                     users.update(arg["uname"], newNodeId);
-                });
+                }, null);
         } else {
             var parentsNodeId = db.getParentsId(currentNid);
             users.update(arg["uname"], parentsNodeId);
@@ -501,7 +508,7 @@ function Map(nodeFuncs) {
                 }, function() {
                     db.hide(currentNid);
                     users.update(arg["uname"], parentsNodeId);
-                });
+                }, null);
         }
     };
 
@@ -517,10 +524,13 @@ function Map(nodeFuncs) {
         }
     };
 
-    var appendUndo = function(undoFunc, redoFunc) {
+    var appendUndo = function(undoFunc, redoFunc, hookFunc) {
         ArrayRemoveElement(undoList, currentUndoIndex, undoList.length - 1);
         undoList.push({undo : undoFunc, redo : redoFunc});
         currentUndoIndex++;
+        if(hookFunc) {
+            hookFunc();
+        }
     };
 
     var addSiblingAfter = function() {
@@ -534,7 +544,7 @@ function Map(nodeFuncs) {
             }, function() {
                 db.show(newNodeId);
                 users.update("owner", newNodeId);
-            });
+            }, null);
         }
     };
 
@@ -549,7 +559,7 @@ function Map(nodeFuncs) {
             }, function() {
                 db.show(newNodeId);
                 users.update("owner", newNodeId);
-            });
+            }, null);
         }
     };
 
@@ -561,7 +571,7 @@ function Map(nodeFuncs) {
             db.swap(newNid, nid);
         }, function() {
             db.swap(nid, newNid);
-        });
+        }, null);
     };
 
     var keyLeft = function() {
@@ -649,7 +659,7 @@ function Map(nodeFuncs) {
                     db.swapOrder(nid, siblingid);
                 }, function() {
                     db.swapOrder(nid, siblingid);
-                });
+                }, null);
         } else if(!siblingid && DIRECT.LEFT == db.checkDirection(nid)) {
             var parentsId = db.getParentsId(nid);
             var rootId = db.findNodeRoot(nid);
@@ -659,7 +669,7 @@ function Map(nodeFuncs) {
                         db.moveToLeftNode(parentsId, nid);
                     }, function() {
                         db.moveToRightNode(parentsId, nid);
-                    });
+                    }, null);
             }
         }
     };
@@ -673,7 +683,7 @@ function Map(nodeFuncs) {
                     db.swapOrder(nid, siblingid);
                 }, function() {
                     db.swapOrder(nid, siblingid);
-                });
+                }, null);
         } else if(!siblingid && DIRECT.RIGHT == db.checkDirection(nid)) {
             var parentsId = db.getParentsId(nid);
             var rootId = db.findNodeRoot(nid);
@@ -683,7 +693,7 @@ function Map(nodeFuncs) {
                         db.moveToRightNode(parentsId, nid);
                     }, function() {
                         db.moveToLeftNode(parentsId, nid);
-                    });
+                    }, null);
             }
         }
     };
@@ -692,16 +702,24 @@ function Map(nodeFuncs) {
         var nid = users.get("owner");
         var direct = db.checkDirection(nid);
         if(direct != DIRECT.ROOT) {
-            var node = db.get(nid);
-            if((direct == DIRECT.RIGHT && node.link.right.length > 0)
-               || direct == DIRECT.LEFT && node.link.left.length > 0) {
-                node.fold = !node.fold;
+            var n = db.get(nid);
+            if((direct == DIRECT.RIGHT && n.link.right.length > 0)
+               || direct == DIRECT.LEFT && n.link.left.length > 0) {
+                n.fold = !n.fold;
+                var hook = function() {
+                    if(n.fold) {
+                        db.propagateEvent(nid, nodeFuncs[n.mimetype].onHide);
+                    } else {
+                        db.propagateEvent(nid, nodeFuncs[n.mimetype].onUnhide);
+                    }
+                };
+                hook();
+                appendUndo(function() {
+                    n.fold = !n.fold;
+                }, function() {
+                    n.fold = !n.fold;
+                }, hook);
             }
-            appendUndo(function() {
-                node.hide = !node.fold;
-            }, function() {
-                node.hide = !node.fold;
-            });
         }
     }
 

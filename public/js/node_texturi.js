@@ -81,8 +81,6 @@ var node_texturi = function(container) {
         input.removeEventListener("keydown", keyListener, false);
         var el = createElementIfItNeed(oldNode);
         el.style.display = "none";
-        console.log("node id : " + newNode.hash);
-        console.log("node data : " + newNode.data);
         el = createElementIfItNeed(newNode);
         el.innerText = newNode.data;
     };
@@ -99,6 +97,16 @@ var node_texturi = function(container) {
         e.stopPropagation();
     };
 
+    var onHide = function(n) {
+        var el = createElementIfItNeed(n);
+        el.style.display = "none";
+    };
+
+    var onUnhide = function(n) {
+        var el = createElementIfItNeed(n);
+        el.style.display = "block";
+    };
+
     return {
         draw : draw,
         drawCursor : drawCursor,
@@ -108,7 +116,7 @@ var node_texturi = function(container) {
         finishEdit : finishEdit,
         submitEdit : function() { submitEdit(); },
         cancelEdit : function() { cancelEdit(); },
-        onHide : null,
-        onRedisplay : null,
+        onHide : onHide,
+        onUnhide : onUnhide,
     };
 };
