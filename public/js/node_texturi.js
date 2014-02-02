@@ -49,11 +49,11 @@ var node_texturi = function(container) {
     };
 
     var measure = function(ctx, n) {
-        // TODO. measure div size
+        el = createElementIfItNeed(n);
+        el.innerText = n.data;
         return {
-            width : ctx.measureText(n.data).width + 20
-                + gMapConfig.get("cursorMargin"),
-            height : n.font.size + 2
+            width : el.offsetWidth,
+            height : el.offsetHeight
         };
     };
 
