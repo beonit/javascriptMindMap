@@ -485,30 +485,39 @@ function Map(nodeFuncs) {
 
     var hide = function(arg) {
         var currentNid = users.get(arg["uname"]);
+        var n = db.get(currentNid);
         if(db.findNodeRoot(currentNid) == currentNid) {
             db.hide(currentNid);
             var newNodeId = db.createRoot();
             users.update(arg["uname"], newNodeId);
+            nodeFuncs[n.mimetype].onHide(n);
+            db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onHide);
             appendUndo(function() {
-                    db.hide(newNodeId);
-                    db.show(currentNid);
-                    users.update(arg["uname"], currentNid);
-                }, function() {
-                    db.hide(currentNid);
-                    db.show(newNodeId);
-                    users.update(arg["uname"], newNodeId);
-                }, null);
+                db.hide(newNodeId);
+                db.show(currentNid);
+                users.update(arg["uname"], currentNid);
+                db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onUnhide);
+            }, function() {
+                db.hide(currentNid);
+                db.show(newNodeId);
+                users.update(arg["uname"], newNodeId);
+                db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onHide);
+            }, null);
         } else {
             var parentsNodeId = db.getParentsId(currentNid);
             users.update(arg["uname"], parentsNodeId);
             db.hide(currentNid);
+            nodeFuncs[n.mimetype].onHide(n);
+            db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onHide);
             appendUndo(function() {
-                    db.show(currentNid);
-                    users.update(arg["uname"], currentNid);
-                }, function() {
-                    db.hide(currentNid);
-                    users.update(arg["uname"], parentsNodeId);
-                }, null);
+                db.show(currentNid);
+                users.update(arg["uname"], currentNid);
+                db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onUnhide);
+            }, function() {
+                db.hide(currentNid);
+                users.update(arg["uname"], parentsNodeId);
+                db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onHide);
+            }, null);
         }
     };
 
