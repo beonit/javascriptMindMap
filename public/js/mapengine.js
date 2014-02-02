@@ -469,53 +469,53 @@ function Map(nodeFuncs) {
         return false;
     };
 
-    var append = function(arg) {
-        var currentNid = users.get(arg["uname"]);
+    var append = function(uname) {
+        var currentNid = users.get(uname);
         var newNode = new Node(currentNid);
         var newNodeId = db.appendChild(currentNid, newNode);
-        users.update(arg["uname"], newNodeId);
+        users.update(uname, newNodeId);
         appendUndo(function() {
             db.hide(newNodeId);
-            users.update(arg["uname"], currentNid);
+            users.update(uname, currentNid);
         } , function() {
             db.show(newNodeId);
-            users.update(arg["uname"], newNodeId);
+            users.update(uname, newNodeId);
         }, null);
     };
 
-    var hide = function(arg) {
-        var currentNid = users.get(arg["uname"]);
+    var hide = function(uname) {
+        var currentNid = users.get(uname);
         var n = db.get(currentNid);
         if(db.findNodeRoot(currentNid) == currentNid) {
             db.hide(currentNid);
             var newNodeId = db.createRoot();
-            users.update(arg["uname"], newNodeId);
+            users.update(uname, newNodeId);
             nodeFuncs[n.mimetype].onHide(n);
             db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onHide);
             appendUndo(function() {
                 db.hide(newNodeId);
                 db.show(currentNid);
-                users.update(arg["uname"], currentNid);
+                users.update(uname, currentNid);
                 db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onUnhide);
             }, function() {
                 db.hide(currentNid);
                 db.show(newNodeId);
-                users.update(arg["uname"], newNodeId);
+                users.update(uname, newNodeId);
                 db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onHide);
             }, null);
         } else {
             var parentsNodeId = db.getParentsId(currentNid);
-            users.update(arg["uname"], parentsNodeId);
+            users.update(uname, parentsNodeId);
             db.hide(currentNid);
             nodeFuncs[n.mimetype].onHide(n);
             db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onHide);
             appendUndo(function() {
                 db.show(currentNid);
-                users.update(arg["uname"], currentNid);
+                users.update(uname, currentNid);
                 db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onUnhide);
             }, function() {
                 db.hide(currentNid);
-                users.update(arg["uname"], parentsNodeId);
+                users.update(uname, parentsNodeId);
                 db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onHide);
             }, null);
         }
@@ -572,9 +572,9 @@ function Map(nodeFuncs) {
         }
     };
 
-    var edit = function(args) {
-        var nid = users.get(args["uname"]);
-        var newNid = db.addNode(args["node"]);
+    var edit = function(uname, node) {
+        var nid = users.get(uname);
+        var newNid = db.addNode(node);
         db.swap(nid, newNid);
         appendUndo(function() {
             db.swap(newNid, nid);
@@ -740,7 +740,7 @@ function Map(nodeFuncs) {
     var cut = function() {
         var nid = users.get("owner");
         db.copyToClipboard(nid);
-        hide({"uname":"owner"});
+        hide("owner");
     };
 
     var paste = function() {
@@ -777,7 +777,7 @@ function Map(nodeFuncs) {
             mapAPIs.cancelEdit = null;
         };
         var submit = function() {
-            edit({"uname":"owner", "node":newNode});
+            edit("owner", newNode);
             editFinish();
         };
         var cancel = function() {

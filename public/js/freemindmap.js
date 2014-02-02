@@ -53,11 +53,11 @@ function MapController() {
     this.altRight = function(e) { return true; };
     this.altDown = function(e) { map.orderDown(); return true; };
     this.insert = function(e) {
-        map.append({"uname":"owner"});
+        map.append("owner");
         return true;
     };
     this.delete = function(e) {
-        map.remove({"uname":"owner"});
+        map.remove("owner");
         return true;
     };
     this.home = function(e) { return true; };
