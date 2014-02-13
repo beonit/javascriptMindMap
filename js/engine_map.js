@@ -2,6 +2,7 @@ function Map(nodeFuncs) {
     var users, db, undoList = [], currentUndoIndex = 0;
     var painter;
     var clipBoard = false;
+    var canvasHeight, canvasWidth;
 
     (function init() {
         db = new NodeDB();
@@ -200,7 +201,7 @@ function Map(nodeFuncs) {
         }
     };
 
-    var keyUp = function(canvasHeight) {
+    var keyUp = function() {
         var nid = users.get("owner");
         if(db.checkDirection(nid) == DIRECT.ROOT) {
             return;
@@ -228,7 +229,7 @@ function Map(nodeFuncs) {
         // no node...
     };
 
-    var keyDown = function(canvasHeight) {
+    var keyDown = function() {
         var nid = users.get("owner");
         if(db.checkDirection(nid) == DIRECT.ROOT) {
             return;
@@ -362,6 +363,11 @@ function Map(nodeFuncs) {
         }
     };
 
+    var setWithHeight = function(width, height) {
+        canvasWidth = width;
+        canvasHeight = height;
+    };
+
     var startEdit = function(ctx, finishCallback) {
         var nid = users.get("owner");
         var oldNode = db.get(nid);
@@ -405,7 +411,6 @@ function Map(nodeFuncs) {
         copy : copy,
         cut : cut,
         draw : draw,
-        edit : edit,
         fold : fold,
         keyDown : keyDown,
         keyLeft : keyLeft,
@@ -419,6 +424,7 @@ function Map(nodeFuncs) {
         paste : paste,
         redo : redo,
         remove : hide,
+        setWithHeight : setWithHeight,
         startEdit : startEdit,
         submitEdit : null,
         undo : undo,
