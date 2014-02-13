@@ -62,9 +62,11 @@ function Map(nodeFuncs) {
         appendUndo(function() {
             db.hide(newNodeId);
             users.update(uname, currentNid);
+            nodeFuncs[newNode.mimetype].onHide(newNode);
         } , function() {
             db.show(newNodeId);
             users.update(uname, newNodeId);
+            nodeFuncs[newNode.mimetype].onUnhide(newNode);
         }, null);
     };
 
@@ -95,12 +97,14 @@ function Map(nodeFuncs) {
             nodeFuncs[n.mimetype].onHide(n);
             db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onHide);
             appendUndo(function() {
-                db.show(currentNid);
                 users.update(uname, currentNid);
+                db.show(currentNid);
+                nodeFuncs[n.mimetype].onUnhide(n);
                 db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onUnhide);
             }, function() {
-                db.hide(currentNid);
                 users.update(uname, parentsNodeId);
+                db.hide(currentNid);
+                nodeFuncs[n.mimetype].onHide(n);
                 db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onHide);
             }, null);
         }
@@ -135,9 +139,13 @@ function Map(nodeFuncs) {
             appendUndo(function() {
                 db.hide(newNodeId);
                 users.update("owner", nid);
+                var n = db.get(newNodeId);
+                nodeFuncs[n.mimetype].onHide(n);
             }, function() {
                 db.show(newNodeId);
                 users.update("owner", newNodeId);
+                var n = db.get(newNodeId);
+                nodeFuncs[n.mimetype].onUnhide(n);
             }, null);
         }
     };
@@ -150,9 +158,13 @@ function Map(nodeFuncs) {
             appendUndo(function() {
                 db.hide(newNodeId);
                 users.update("owner", nid);
+                var n = db.get(newNodeId);
+                nodeFuncs[n.mimetype].onHide(n);
             }, function() {
                 db.show(newNodeId);
                 users.update("owner", newNodeId);
+                var n = db.get(newNodeId);
+                nodeFuncs[n.mimetype].onUnhide(n);
             }, null);
         }
     };
