@@ -4,8 +4,8 @@ function Map(nodeFuncs) {
     var clipBoard = false;
     var canvasHeight, canvasWidth;
 
-    (function init() {
-        db = new NodeDB();
+    (function() {
+        db = new NodeDB(nodeFuncs);
         var nid = db.createRoot();
         users = new Users(nid, db);
         painter = new Painter(db, users, nodeFuncs);
@@ -63,50 +63,37 @@ function Map(nodeFuncs) {
         appendUndo(function() {
             db.hide(newNodeId);
             users.update(uname, currentNid);
-            nodeFuncs[newNode.mimetype].onHide(newNode);
         } , function() {
             db.show(newNodeId);
             users.update(uname, newNodeId);
-            nodeFuncs[newNode.mimetype].onUnhide(newNode);
         }, null);
     };
 
     var hide = function(uname) {
         var currentNid = users.get(uname);
-        var n = db.get(currentNid);
         if(db.findNodeRoot(currentNid) == currentNid) {
             db.hide(currentNid);
             var newNodeId = db.createRoot();
             users.update(uname, newNodeId);
-            nodeFuncs[n.mimetype].onHide(n);
-            db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onHide);
             appendUndo(function() {
+                users.update(uname, currentNid);
                 db.hide(newNodeId);
                 db.show(currentNid);
-                users.update(uname, currentNid);
-                db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onUnhide);
             }, function() {
+                users.update(uname, newNodeId);
                 db.hide(currentNid);
                 db.show(newNodeId);
-                users.update(uname, newNodeId);
-                db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onHide);
             }, null);
         } else {
             var parentsNodeId = db.getParentsId(currentNid);
             users.update(uname, parentsNodeId);
             db.hide(currentNid);
-            nodeFuncs[n.mimetype].onHide(n);
-            db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onHide);
             appendUndo(function() {
                 users.update(uname, currentNid);
                 db.show(currentNid);
-                nodeFuncs[n.mimetype].onUnhide(n);
-                db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onUnhide);
             }, function() {
                 users.update(uname, parentsNodeId);
                 db.hide(currentNid);
-                nodeFuncs[n.mimetype].onHide(n);
-                db.propagateEvent(currentNid, nodeFuncs[n.mimetype].onHide);
             }, null);
         }
     };
@@ -308,26 +295,15 @@ function Map(nodeFuncs) {
     var fold = function() {
         var nid = users.get("owner");
         var direct = db.checkDirection(nid);
-        if(direct != DIRECT.ROOT) {
-            var n = db.get(nid);
-            if((direct == DIRECT.RIGHT && n.link.right.length > 0)
-               || direct == DIRECT.LEFT && n.link.left.length > 0) {
-                n.fold = !n.fold;
-                var hook = function() {
-                    if(n.fold) {
-                        db.propagateEvent(nid, nodeFuncs[n.mimetype].onHide);
-                    } else {
-                        db.propagateEvent(nid, nodeFuncs[n.mimetype].onUnhide);
-                    }
-                };
-                hook();
-                appendUndo(function() {
-                    n.fold = !n.fold;
-                }, function() {
-                    n.fold = !n.fold;
-                }, hook);
-            }
+        if(direct == DIRECT.ROOT) {
+            return;
         }
+        db.toggleFold(nid);
+        appendUndo(function() {
+            db.toggleFold(nid);
+        }, function() {
+            db.toggleFold(nid);
+        }, null);
     }
 
     var copy = function() {
@@ -344,6 +320,11 @@ function Map(nodeFuncs) {
     var paste = function() {
         var nid = users.get("owner");
         nid = db.pasteFromClipboard(nid);
+        appendUndo(function() {
+            db.hide(nid);
+        }, function() {
+            db.show(nid);
+        }, null);
     };
 
     var draw = function(args) {

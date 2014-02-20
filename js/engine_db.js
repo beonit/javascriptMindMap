@@ -1,4 +1,4 @@
-function NodeDB() {
+function NodeDB(nodeFuncs) {
     var nodeDB = [], clipboard = [], roots = [], drawInfoDB = [];
 
     var _findUpperNidInList = function (nid, list) {
@@ -215,24 +215,22 @@ function NodeDB() {
         return newChild;
     };
 
-    var propagateEvent = function(nid, event) {
-        var n = nodeDB[nid];
-        for(var i in n.link.right) {
-            event(nodeDB[n.link.right[i]]);
-            propagateEvent(n.link.right[i], event);
-        }
-        for(var i in n.link.left) {
-            event(nodeDB[n.link.left[i]]);
-            propagateEvent(n.link.left[i], event);
-        }
-    };
-
     var findUpperSibling = function(nid) {
         return _findUpperNidInList(nid, _getChildListHasNid(nid));
     };
 
     var findLowerSibling = function(nid) {
         return _findLowerNidInList(nid, _getChildListHasNid(nid));
+    };
+
+    var toggleFold = function(nid) {
+        var n = nodeDB[nid];
+        n.fold = !n.fold;
+        if(n.fold) {
+            propagateHideEvent(nid);
+        } else {
+            propagateShowEvent(nid);
+        }
     };
 
     var swapOrder = function(nid1, nid2) {
@@ -264,9 +262,19 @@ function NodeDB() {
 
     var getRoots = function() { return roots; };
 
-    var hide = function(nid) { nodeDB[nid].display = false; };
+    var hide = function(nid) {
+        var n = nodeDB[nid];
+        n.display = false;
+        nodeFuncs[n.mimetype].onHide(n);
+        propagateHideEvent(nid);
+    };
 
-    var show = function(nid) { nodeDB[nid].display = true; };
+    var show = function(nid) {
+        var n = nodeDB[nid];
+        n.display = true;
+        nodeFuncs[n.mimetype].onUnhide(n);
+        propagateShowEvent(nid);
+    };
 
     var appendChild = function(parentsId, newNode) {
         newNode.hash = nodeDB.length;
@@ -300,6 +308,52 @@ function NodeDB() {
         }
     }
 
+    var propagateShowEvent = function(nid) {
+        var n = nodeDB[nid];
+        var child;
+        for(var i in n.link.left) {
+            child = nodeDB[n.link.left[i]];
+            if(child.display) {
+                nodeFuncs[child.mimetype].onUnhide(child);
+                if(!child.fold) {
+                    propagateShowEvent(n.link.left[i]);
+                }
+            }
+        }
+        for(var i in n.link.right) {
+            child = nodeDB[n.link.right[i]];
+            if(child.display) {
+                nodeFuncs[child.mimetype].onUnhide(child);
+                if(!child.fold) {
+                    propagateShowEvent(n.link.right[i]);
+                }
+            }
+        }
+    }
+
+    var propagateHideEvent = function(nid) {
+        var n = nodeDB[nid];
+        var child;
+        for(var i in n.link.left) {
+            child = nodeDB[n.link.left[i]];
+            if(child.display) {
+                nodeFuncs[child.mimetype].onHide(child);
+                if(!child.fold) {
+                    propagateHideEvent(n.link.left[i]);
+                }
+            }
+        }
+        for(var i in n.link.right) {
+            child = nodeDB[n.link.right[i]];
+            if(child.display) {
+                nodeFuncs[child.mimetype].onHide(child);
+                if(!child.fold) {
+                    propagateHideEvent(n.link.right[i]);
+                }
+            }
+        }
+    }
+
     var importData = function(data) {
         nodeDB = data.nodeDB;
         roots = data.roots;
@@ -330,6 +384,7 @@ function NodeDB() {
         findLowerSibling : findLowerSibling,
         findNodeRoot : findNodeRoot,
         findUpperSibling : findUpperSibling,
+        toggleFold : toggleFold,
         get : get,
         getDrawInfo : getDrawInfo,
         getIdByPoint : getIdByPoint,
@@ -340,7 +395,6 @@ function NodeDB() {
         moveToLeftNode : moveToLeftNode,
         moveToRightNode : moveToRightNode,
         pasteFromClipboard : pasteFromClipBoard,
-        propagateEvent : propagateEvent,
         show : show,
         swap : swap,
         swapOrder : swapOrder,
