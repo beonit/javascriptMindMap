@@ -1,4 +1,4 @@
-var node_textplain = function(container) {
+var node_textplain = function(container, map) {
     var _node, _ctx, _initWidth;
     var submitEdit, cancelEdit;
     var margin = gMapConfig.get("cursorMargin");

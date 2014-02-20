@@ -344,6 +344,11 @@ function Map(nodeFuncs) {
         }
     };
 
+    var setFocus = function(nid) {
+        users.update("owner", nid);
+        this.drawAll();
+    };
+
     var setWithHeight = function(width, height) {
         canvasWidth = width;
         canvasHeight = height;
@@ -393,6 +398,7 @@ function Map(nodeFuncs) {
         cut : cut,
         draw : draw,
         fold : fold,
+        fromJSON : fromJSON,
         keyDown : keyDown,
         keyLeft : keyLeft,
         keyRight : keyRight,
@@ -404,15 +410,15 @@ function Map(nodeFuncs) {
         orderUp : orderUp,
         paste : paste,
         redo : redo,
+        redo : redo,
         remove : hide,
+        setFocus : setFocus,
         setWithHeight : setWithHeight,
         startEdit : startEdit,
         submitEdit : null,
-        undo : undo,
-        redo : redo,
         title : title,
         toJSON : toJSON,
-        fromJSON : fromJSON,
+        undo : undo,
     };
     return mapAPIs;
 }

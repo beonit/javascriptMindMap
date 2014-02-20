@@ -1,9 +1,10 @@
-var node_texturi = function(container) {
+var node_texturi = function(container, engine, canvasId) {
     var _node, _ctx, _initWidth;
     var submitEdit, cancelEdit;
     var margin = gMapConfig.get("cursorMargin");
     var elementPrefix = "node_texturi_";
     var el;
+    var canvas = document.createElement(canvasId);
 
     var input = document.createElement("input");
     input.style.position = "absolute";
@@ -18,6 +19,11 @@ var node_texturi = function(container) {
             el.style.position = "absolute";
             el.style.display = "block";
             container.appendChild(el);
+            el.onclick = function() {
+                nid = parseInt(this.getAttribute("id").split(elementPrefix)[1]);
+                engine.setFocus(nid);
+                canvas.focus();
+            };
         }
         return el;
     };

@@ -16,13 +16,14 @@ var gMapConfig = (function() {
     }
 })();
 
+var nodePlugins = {};
+var engine = new Map(nodePlugins);
+
 var container = document.getElementById(gMapConfig.get("containerId"));
-var nodePlugins = {
-    "text/plain" : new node_textplain(container),
-    "text/uri" : new node_texturi(container),
-};
-var map = new Map(nodePlugins);
-var keyMapper = KeyMapper(map);
+nodePlugins["text/plain"] = new node_textplain(container, engine);
+nodePlugins["text/uri"] = new node_texturi(container, engine, "freemindmap");
+
+var keyMapper = KeyMapper(engine);
 
 var editKey = {
     113 : true
@@ -64,12 +65,12 @@ var shiftKey = {
     13 : keyMapper.addSiblingBefore
 }
 
-// init map object
-var mapOnload = engineLoadEvent(gMapConfig, map, normalKey, editKey,
+// init engine object
+var engineOnload = engineLoadEvent(gMapConfig, engine, normalKey, editKey,
                                 ctrlKey, altKey, shiftKey);
 
 if (window.addEventListener) { // Mozilla, Netscape, Firefox
-    window.addEventListener('load', mapOnload, false);
+    window.addEventListener('load', engineOnload, false);
 } else if (window.attachEvent) { // IE
-    window.attachEvent('onload', mapOnload);
+    window.attachEvent('onload', engineOnload);
 }

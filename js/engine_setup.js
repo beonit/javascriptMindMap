@@ -14,6 +14,7 @@ function engineLoadEvent(config, map, normalKey, editKey, ctrlKey, altKey, shift
         // draw text
         map.draw({"ctx":ctx, "width":canvas.width, "height":canvas.height});
     };
+    map.drawAll = drawAll;
 
     var resizeCanvas = function() {
         map.setWithHeight(container.offsetWidth, container.offsetHeight);
@@ -85,13 +86,6 @@ function engineLoadEvent(config, map, normalKey, editKey, ctrlKey, altKey, shift
             posDownY = e.y;
             drawAll();
             lastDrawTime = currentTime;
-        } else if(!leftDown && currentTime - lastDrawTime > 33) {
-            if(editMode != EDITMODE.EDITING
-               && map.moveCursor({"x":e.x - canvas.offsetLeft
-                                  , "y":e.y - canvas.offsetTop})) {
-                drawAll();
-                lastDrawTime = currentTime;
-            }
         }
         return;
     }
