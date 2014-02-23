@@ -15,8 +15,3 @@ canvas { display:block; }
     right: 0;
     top: 0;
 }
-
-#inputTextPlain {
-    position : absolute;
-    display : none;
-}

@@ -16,10 +16,9 @@ var gMapConfig = (function() {
     }
 })();
 
+var container = document.getElementById(gMapConfig.get("containerId"));
 var nodePlugins = {};
 var engine = new Map(nodePlugins);
-
-var container = document.getElementById(gMapConfig.get("containerId"));
 nodePlugins["text/plain"] = new node_textplain(container, engine);
 nodePlugins["text/uri"] = new node_texturi(container, engine, "freemindmap");
 
