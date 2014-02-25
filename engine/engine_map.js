@@ -1,4 +1,4 @@
-function Map(nodeFuncs) {
+function Map(nodeFuncs, typeEditor) {
     var users, db, undoList = [], currentUndoIndex = 0;
     var painter;
     var clipBoard = false;
@@ -378,6 +378,29 @@ function Map(nodeFuncs) {
                                               submit, cancel);
     };
 
+    var startTypeEdit = function(finishCallback) {
+        var nid = users.get("owner");
+        var oldNode = db.get(nid);
+        var newNode = JSON.parse(JSON.stringify(oldNode));
+        var drawInfo = JSON.parse(JSON.stringify(db.getDrawInfo(nid)));
+        var editFinish = function() {
+            nodeFuncs[newNode.mimetype].finishEdit(oldNode, newNode);
+            finishCallback();
+            mapAPIs.submitEdit = null;
+            mapAPIs.cancelEdit = null;
+        };
+        var submit = function() {
+            edit("owner", newNode);
+            editFinish();
+        };
+        var cancel = function() {
+            editFinish();
+        };
+        mapAPIs.submitEdit = submit;
+        mapAPIs.cancelEdit = cancel;
+        typeEditor.startEdit(newNode, submit, cancel);
+    };
+
     var fromJSON = function(dataStr) {
         var data = JSON.parse(dataStr);
         db.importData(data.db);
@@ -415,6 +438,7 @@ function Map(nodeFuncs) {
         setFocus : setFocus,
         setWithHeight : setWithHeight,
         startEdit : startEdit,
+        startTypeEdit : startTypeEdit,
         submitEdit : null,
         title : title,
         toJSON : toJSON,

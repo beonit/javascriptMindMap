@@ -1,4 +1,5 @@
-function engineLoadEvent(config, map, normalKey, editKey, ctrlKey, altKey, shiftKey) {
+function engineLoadEvent(config, map, normalKey, editKey, typeEditKey,
+                         ctrlKey, altKey, shiftKey) {
     var ctx, canvas, container;
     var EDITMODE = {NONE:0, EDITING:1, SUBMIT:2};
     var editMode = EDITMODE.NONE;
@@ -33,7 +34,23 @@ function engineLoadEvent(config, map, normalKey, editKey, ctrlKey, altKey, shift
                 keyPropagation = altKey[e.keyCode](e);
             } else if(e.shiftKey && shiftKey[e.keyCode]) {
                 keyPropagation = shiftKey[e.keyCode](e);
-            } else if(editKey[e.keyCode]) {
+            } else if(e.altKey == typeEditKey.alt &&
+                      e.ctrlKey == typeEditKey.ctrl &&
+                      e.shiftKey == typeEditKey.shift &&
+                      e.keyCode == typeEditKey.keycode) {
+                if(editMode == EDITMODE.EDITING) {
+                    return false;
+                }
+                editMode = EDITMODE.EDITING;
+                var finishCallback = function() {
+                    editMode = EDITMODE.NONE;
+                    drawAll();
+                };
+                map.startTypeEdit(finishCallback);
+            } else if(e.altKey == editKey.alt &&
+                      e.ctrlKey == editKey.ctrl &&
+                      e.shiftKey == editKey.shift &&
+                      e.keyCode == editKey.keycode) {
                 if(editMode == EDITMODE.EDITING) {
                     return false;
                 }

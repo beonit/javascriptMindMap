@@ -10,6 +10,7 @@ function Node(parentsId) {
     // data
     this.mimetype = "text/uri";
     this.data = "default";
+    this.extra = "extraData";
     this.hash = null;
     this.font = { face : "Arial",
                   size : 15,

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=utf8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" type="text/css" href="./css/freemindmap.css">
+<script type="text/javascript" src="./jquery/jquery-2.0.3.min.js"></script>
+<link rel="stylesheet" type="text/css" href="./bootstrap/css/bootstrap.css">
+<script type="text/javascript" src="./bootstrap/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+<div id="mapContainer">
+  <canvas id="freemindmap"></canvas>
+
+  <!-- Type editor modal -->
+  <div class="modal fade" id="typeEditorModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <!-- Nav tabs -->
+          <ul class="nav nav-tabs">
+            <li class="active"><a href="#text_plain" data-toggle="tab">Text</a></li>
+            <li><a href="#text_uri" data-toggle="tab">Link</a></li>
+            <li><a href="#image_uri" data-toggle="tab">Image url</a></li>
+            <li><a href="#youtube_uri" data-toggle="tab">Youtube</a></li>
+          </ul>
+
+          <!-- Tab panes -->
+          <div class="tab-content">
+            <div class="tab-pane active" id="text_plain">
+              <br/>
+              <div class="input-group">
+                <span class="input-group-addon">T</span>
+                <input type="text" class="form-control input-node-data" placeholder="Username">
+                <input type="hidden" class="form-control input-node-extra">
+              </div>
+            </div>
+
+            <div class="tab-pane" id="text_uri">
+              <br/>
+              <div class="input-group">
+                <span class="input-group-addon">T</span>
+                <input type="text" class="form-control input-node-data" placeholder="Display text">
+                <span class="input-group-addon">Url</span>
+                <input type="text" class="form-control input-node-extra" placeholder="Link url">
+              </div>
+            </div>
+
+            <div class="tab-pane" id="image_uri">
+              <br/>
+              <div class="input-group">
+                <span class="input-group-addon">D</span>
+                <input type="text" class="form-control input-node-data" placeholder="Description text">
+                <span class="input-group-addon">Url</span>
+                <input type="text" class="form-control input-node-extra" placeholder="Image url">
+              </div>
+            </div>
+
+            <div class="tab-pane" id="youtube_uri">
+              <br/>
+              <div class="input-group">
+                <span class="input-group-addon">Url</span>
+                <input type="text" class="form-control input-node-data" placeholder="Youtube url">
+                <input type="hidden" class="form-control input-node-extra">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" id="typeEditorModalCancel" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="typeEditorModalSubmit">Save change</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+
+<script type="text/javascript" src="./engine/engine_data.js"></script>
+<script type="text/javascript" src="./engine/engine_db.js"></script>
+<script type="text/javascript" src="./engine/engine_map.js"></script>
+<script type="text/javascript" src="./engine/engine_painter.js"></script>
+<script type="text/javascript" src="./engine/engine_setup.js"></script>
+<script type="text/javascript" src="./plugins/node_textplain.js"></script>
+<script type="text/javascript" src="./plugins/node_texturi.js"></script>
+<script type="text/javascript" src="./plugins/type_editor.js"></script>
+<script type="text/javascript" src="./keymap.js"></script>
+<script type="text/javascript" src="./controller.js"></script>
+</html>

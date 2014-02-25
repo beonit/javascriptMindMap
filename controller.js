@@ -18,14 +18,25 @@ var gMapConfig = (function() {
 
 var container = document.getElementById(gMapConfig.get("containerId"));
 var nodePlugins = {};
-var engine = new Map(nodePlugins);
+var typeEditor = new type_editor("#typeEditorModal");
+var engine = new Map(nodePlugins, typeEditor);
 nodePlugins["text/plain"] = new node_textplain(container, engine);
 nodePlugins["text/uri"] = new node_texturi(container, engine, "freemindmap");
 
 var keyMapper = KeyMapper(engine);
 
 var editKey = {
-    113 : true
+    alt : false,
+    ctrl : false,
+    shift : false,
+    keycode : 113
+};
+
+var typeEditKey = {
+    alt : false,
+    ctrl : true,
+    shift : false,
+    keycode : 113
 };
 
 var normalKey = {
@@ -66,7 +77,7 @@ var shiftKey = {
 
 // init engine object
 var engineOnload = engineLoadEvent(gMapConfig, engine, normalKey, editKey,
-                                ctrlKey, altKey, shiftKey);
+                                   typeEditKey, ctrlKey, altKey, shiftKey);
 
 if (window.addEventListener) { // Mozilla, Netscape, Firefox
     window.addEventListener('load', engineOnload, false);
