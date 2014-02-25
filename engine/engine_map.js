@@ -157,17 +157,6 @@ function Map(nodeFuncs, typeEditor) {
         }
     };
 
-    var edit = function(uname, node) {
-        var nid = users.get(uname);
-        var newNid = db.addNode(node);
-        db.swap(nid, newNid);
-        appendUndo(function() {
-            db.swap(newNid, nid);
-        }, function() {
-            db.swap(nid, newNid);
-        }, null);
-    };
-
     var keyLeft = function() {
         var nid = users.get("owner");
         var direct = db.checkDirection(nid);
@@ -352,6 +341,23 @@ function Map(nodeFuncs, typeEditor) {
     var setWithHeight = function(width, height) {
         canvasWidth = width;
         canvasHeight = height;
+    };
+
+    var edit = function(uname, newNode) {
+        var nid = users.get(uname);
+        var oldNode = db.get(nid);
+        var newNid = db.addNode(newNode);
+        db.swap(nid, newNid);
+        nodeFuncs[oldNode.mimetype].onHide(oldNode);
+        appendUndo(function() {
+            db.swap(newNid, nid);
+            nodeFuncs[oldNode.mimetype].onUnhide(oldNode);
+            nodeFuncs[newNode.mimetype].onHide(newNode);
+        }, function() {
+            db.swap(nid, newNid);
+            nodeFuncs[oldNode.mimetype].onHide(oldNode);
+            nodeFuncs[newNode.mimetype].onUnhide(newNode);
+        }, null);
     };
 
     var startEdit = function(ctx, finishCallback) {

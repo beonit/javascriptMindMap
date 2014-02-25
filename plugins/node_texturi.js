@@ -65,13 +65,13 @@ var node_texturi = function(container, engine, canvasId) {
 
     var startEdit = function(ctx, node, drawInfo, submit, cancel) {
         var el = createElementIfItNeed(node);
-        el.style.display = "none";
         _node = node;
         _ctx = ctx;
         _initWidth = drawInfo.measure.width;
         submitEdit = submit;
         cancelEdit = cancel;
 
+        input.style.zIndex = "100";
         input.style.left = drawInfo.drawPos.start.x + "px";
         input.style.top = drawInfo.drawPos.start.y + "px";
         input.style.width = drawInfo.measure.width + 10 + "px";
@@ -85,15 +85,13 @@ var node_texturi = function(container, engine, canvasId) {
     var finishEdit = function(oldNode, newNode) {
         input.style.display = "none";
         input.removeEventListener("keydown", keyListener, false);
-        var el = createElementIfItNeed(oldNode);
-        el.style.display = "none";
-        el = createElementIfItNeed(newNode);
+        var el = createElementIfItNeed(newNode);
         el.innerText = newNode.data;
     };
 
     var keyListener = function(e) {
-        _node.data = input.value;
         if(e.keyCode == 13) { // ENTER
+            _node.data = input.value;
             submitEdit();
         } else if(e.keyCode == 27) { // ESC
             cancelEdit();

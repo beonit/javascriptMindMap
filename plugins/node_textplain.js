@@ -74,6 +74,12 @@ var node_textplain = function(container, map) {
         e.stopPropagation();
     };
 
+    var onHide = function(n) {
+    };
+
+    var onUnhide = function(n) {
+    };
+
     return {
         draw : draw,
         drawCursor : drawCursor,
@@ -83,9 +89,7 @@ var node_textplain = function(container, map) {
         finishEdit : finishEdit,
         submitEdit : function() { submitEdit(); },
         cancelEdit : function() { cancelEdit(); },
-        fold : null,
-        unfold : null,
-        onCreate : null,
-        onDelete : null,
+        onHide : onHide,
+        onUnhide : onUnhide,
     };
 };
