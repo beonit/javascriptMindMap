@@ -108,18 +108,12 @@ function engineLoadEvent(config, map, normalKey, editKey, typeEditKey,
     }
 
     var mouseClickHandler = function(e) {
-        if(e.button == 0 && upTime - downTime < 100) {
-            // click
-            var w = (posDownX - posUpX) * (posDownX - posUpX);
-            var h = (posDownY - posUpY) * (posDownY - posUpY);
-            if(Math.sqrt(w + h) < 10) {
-
-            } else {
-
-            }
-        }
         if(editMode == EDITMODE.EDITING) {
             map.submitEdit();
+        } else if(e.button == 0) {
+            if(map.moveCursor(e.x, e.y)) {
+                drawAll();
+            }
         }
     }
 

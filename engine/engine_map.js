@@ -45,8 +45,8 @@ function Map(nodeFuncs, typeEditor) {
         return nid;
     };
 
-    var moveCursor = function(arg) {
-        var nid = db.getIdByPoint(arg.x, arg.y);
+    var moveCursor = function(x, y) {
+        var nid = db.getIdByPoint(x, y);
         var oldNid = users.get("owner");
         if(nid != null && nid != oldNid) {
             users.update("owner", nid);
