@@ -132,9 +132,14 @@ function NodeDB(nodeFuncs) {
     };
 
     var swap = function(nid1, nid2) {
+        // swap node index
         var n = nodeDB[nid1];
         nodeDB[nid1] = nodeDB[nid2];
         nodeDB[nid2] = n;
+        // swap hash
+        var t = nodeDB[nid1].hash;
+        nodeDB[nid1].hash = nodeDB[nid2].hash
+        nodeDB[nid2].hash = t;
     };
 
     var checkDirection = function(nid) {

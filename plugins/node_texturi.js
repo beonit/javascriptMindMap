@@ -20,8 +20,8 @@ var node_texturi = function(container, engine, canvasId) {
             el.style.display = "block";
             container.appendChild(el);
             el.onclick = function() {
-                nid = parseInt(this.getAttribute("id").split(elementPrefix)[1]);
-                engine.setFocus(nid);
+                nid = this.getAttribute("id").split(elementPrefix)[1];
+                engine.setFocus(parseInt(nid));
                 canvas.focus();
             };
         }

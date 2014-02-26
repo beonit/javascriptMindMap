@@ -45,6 +45,7 @@ function engineLoadEvent(config, map, normalKey, editKey, typeEditKey,
                 var finishCallback = function() {
                     editMode = EDITMODE.NONE;
                     drawAll();
+                    canvas.focus();
                 };
                 map.startTypeEdit(finishCallback);
             } else if(e.altKey == editKey.alt &&
@@ -58,6 +59,7 @@ function engineLoadEvent(config, map, normalKey, editKey, typeEditKey,
                 var finishCallback = function() {
                     editMode = EDITMODE.NONE;
                     drawAll();
+                    canvas.focus();
                 };
                 map.startEdit(ctx, finishCallback);
             } else if(normalKey[e.keyCode]) {
