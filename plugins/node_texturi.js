@@ -19,6 +19,11 @@ var node_texturi = function(container, engine, canvasId) {
             el.style.position = "absolute";
             el.style.display = "block";
             container.appendChild(el);
+            if(validateURL(n.data)) {
+                appendAtag(el, newNode);
+            } else {
+                el.innerText = n.data;
+            }
             el.onclick = function() {
                 nid = this.getAttribute("id").split(elementPrefix)[1];
                 engine.setFocus(parseInt(nid));
@@ -46,7 +51,6 @@ var node_texturi = function(container, engine, canvasId) {
 
     var draw = function(ctx, n, drawInfo, posX, posY) {
         el = createElementIfItNeed(n);
-        el.innerText = n.data;
         el.style.left = posX + "px";
         el.style.top = (posY - drawInfo.measure.height) + "px";
         // ctx.fillStyle = n.font.color;
@@ -56,7 +60,6 @@ var node_texturi = function(container, engine, canvasId) {
 
     var measure = function(ctx, n) {
         el = createElementIfItNeed(n);
-        el.innerText = n.data;
         return {
             width : el.offsetWidth,
             height : el.offsetHeight
@@ -82,11 +85,30 @@ var node_texturi = function(container, engine, canvasId) {
         input.addEventListener("keydown", keyListener, false);
     };
 
+    var validateURL = function(textval) {
+        var urlregex = new RegExp(
+            "^(http|https|ftp)\://([a-zA-Z0-9\.\-]+(\:[a-zA-Z0-9\.&amp;%\$\-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9])\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[0-9])|([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.(com|edu|gov|int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2}))(\:[0-9]+)*(/($|[a-zA-Z0-9\.\,\?\'\\\+&amp;%\$#\=~_\-]+))*$");
+        return urlregex.test(textval);
+    };
+
+    var appendAtag = function(el, n) {
+        el.innerText = "";
+        var linkEl = document.createElement("a");
+        linkEl.setAttribute("href", n.data);
+        linkEl.innerText = n.data;
+        linkEl.style.display = "block";
+        el.appendChild(linkEl);
+    };
+
     var finishEdit = function(oldNode, newNode) {
         input.style.display = "none";
         input.removeEventListener("keydown", keyListener, false);
         var el = createElementIfItNeed(newNode);
-        el.innerText = newNode.data;
+        if(validateURL(newNode.data)) {
+            appendAtag(el, newNode);
+        } else {
+            el.innerText = newNode.data;
+        }
     };
 
     var keyListener = function(e) {
